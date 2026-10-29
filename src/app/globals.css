@@ -1,0 +1,493 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --text-xs: 0.625rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.375rem;
+  --text-3xl: 1.75rem;
+  --text-4xl: 2.125rem;
+  --text-5xl: 2.875rem;
+  --text-6xl: 3.625rem;
+  --text-7xl: 4.375rem;
+  --text-8xl: 5.875rem;
+  --text-9xl: 7.875rem;
+}
+
+:root {
+  --main-color: #530100;
+  --dark-color: #161727;
+  --gray-color: #858585;
+  --gray-light-color: #f5f5f5;
+}
+/* Width */
+*::-webkit-scrollbar {
+  width:6px;
+  height: 6px;
+}
+
+/* Track */
+*::-webkit-scrollbar-track {
+  background: #929292; /* أبيض مكسور */
+  border-radius: 10px;
+}
+
+/* Handle */
+*::-webkit-scrollbar-thumb {
+  background: #111111; /* أسود */
+  border-radius: 10px;; /* فصل خفيف عن التراك */
+}
+
+/* Hover */
+*::-webkit-scrollbar-thumb:hover {
+  background: #000000;
+}
+
+/* container */
+html {
+  scroll-behavior: smooth;
+  background: #110406;
+}
+
+body {
+  min-height: 100vh;
+  font-size: var(--text-base);
+  background:
+    radial-gradient(circle at top, rgba(248, 113, 113, 0.13), transparent 24%),
+    linear-gradient(180deg, #2b0d12 0%, #17070b 22%, #fff7f8 22%, #fff5f6 100%);
+}
+
+.font-expo {
+  font-family: "Cairo", sans-serif;
+}
+
+.container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 750px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    width: 970px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    width: 1200px;
+  }
+}
+
+/* Colors */
+.bg-main {
+  background-color: var(--main-color);
+}
+
+.text-main {
+  color: var(--main-color);
+}
+
+.bg-gray-light {
+  background-color: var(--gray-light-color);
+}
+
+.bg-gray {
+  background-color: var(--gray-color);
+}
+
+.text-gray {
+  color: var(--gray-color);
+}
+
+.bg-dark {
+  background-color: var(--dark-color);
+}
+
+.text-dark {
+  color: var(--dark-color);
+}
+
+.radius {
+  border-radius: 8px;
+}
+
+.h-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+select,
+input,
+textarea {
+  outline: none !important;
+}
+
+/* Sidebar فقط */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(114, 114, 114, 0.25) transparent;
+}
+
+/* Chrome, Edge, Safari */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 5px !important;
+  /* thinner */
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  /* more transparent */
+  border-radius: 10px;
+}
+
+/* Hover (slightly visible) */
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  background: linear-gradient(180deg, #fff8f9 0%, #fff5f6 100%);
+}
+
+.app-content {
+  position: relative;
+}
+
+.app-header-shell {
+  position: relative;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(248, 113, 113, 0.16), transparent 26%),
+    linear-gradient(180deg, #2b0d12 0%, #17070b 100%);
+  border-bottom: 1px solid rgba(251, 113, 133, 0.12);
+  box-shadow: 0 22px 44px -38px rgba(18, 4, 7, 0.45);
+}
+
+.app-header-shell::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 46px;
+  background: linear-gradient(180deg, rgba(23, 7, 11, 0) 0%, rgba(23, 7, 11, 0.28) 100%);
+  pointer-events: none;
+}
+
+.app-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(244, 63, 94, 0.09), transparent 18%),
+    radial-gradient(circle at 84% 20%, rgba(251, 113, 133, 0.08), transparent 16%);
+}
+
+.app-theme {
+  position: relative;
+  z-index: 1;
+}
+
+.app-theme :is(section, article, aside, form, div).bg-white:not(.PhoneInput):not(.PhoneInputCountry) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 245, 246, 0.93) 100%) !important;
+  border-color: rgba(190, 24, 93, 0.12) !important;
+  box-shadow: 0 18px 40px -28px rgba(136, 19, 55, 0.32) !important;
+}
+
+.app-theme :is(section, article, aside, form, div).bg-gray-50,
+.app-theme :is(section, article, aside, form, div).bg-gray-100,
+.app-theme :is(section, article, aside, form, div).bg-orange-50,
+.app-theme :is(section, article, aside, form, div).bg-red-50 {
+  border-color: rgba(190, 24, 93, 0.09) !important;
+  background: linear-gradient(135deg, rgba(255, 247, 248, 0.98) 0%, rgba(255, 240, 242, 0.9) 100%) !important;
+}
+
+.app-theme input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.app-theme select,
+.app-theme textarea {
+  border-radius: 16px;
+  border-color: rgba(190, 24, 93, 0.16) !important;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px -20px rgba(127, 29, 29, 0.24);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.app-theme input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.app-theme select:focus,
+.app-theme textarea:focus {
+  border-color: rgba(225, 29, 72, 0.38) !important;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.09);
+  background: #ffffff;
+}
+
+.app-theme .PhoneInput {
+  border-radius: 16px;
+  border-color: rgba(190, 24, 93, 0.16) !important;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px -20px rgba(127, 29, 29, 0.24);
+}
+
+.app-theme .PhoneInput:focus-within {
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.09);
+}
+
+.app-theme .PhoneInputInput {
+  background: transparent;
+}
+
+.app-theme h1,
+.app-theme h2,
+.app-theme h3 {
+  color: #4c0519;
+}
+
+.custom-shadow {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Unified table action icons */
+table a:has(> svg),
+table button:has(> svg) {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+table a:has(> svg):hover,
+table button:has(> svg):hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+table .text-green-500:has(> svg),
+table .text-green-500 svg {
+  color: #16a34a;
+}
+
+table .text-blue-500:has(> svg),
+table .text-blue-500 svg {
+  color: #2563eb;
+}
+
+table .text-red-500:has(> svg),
+table .text-red-500 svg {
+  color: #dc2626;
+}
+
+/* phone input */
+.PhoneInput {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  padding: 2px 0.5rem;
+  background-color: #ffffff;
+  transition: border-color 0.3s ease;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  -ms-border-radius: 0;
+  -o-border-radius: 0;
+}
+
+@media (max-width: 576px) {
+  .PhoneInput {
+    padding: 0 !important;
+  }
+}
+
+.PhoneInputCountry {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  cursor: pointer;
+}
+
+.PhoneInputCountrySelectArrow {
+  display: inline-block;
+  margin-top: -0.2em;
+  width: 0.6em;
+  height: 0.6em;
+  margin-left: 0.4em;
+  border: solid #333;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  transition: transform 0.3s ease;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+}
+
+[dir="rtl"] .PhoneInputCountrySelectArrow {
+  display: inline-block;
+  margin-top: -0.2em;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.4em;
+  border: solid #333;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  transition: transform 0.3s ease;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+}
+
+.PhoneInputCountry:hover .PhoneInputCountrySelectArrow {
+  transform: scale(1.2) rotate(45deg);
+  -webkit-transform: scale(1.2) rotate(45deg);
+  -moz-transform: scale(1.2) rotate(45deg);
+  -ms-transform: scale(1.2) rotate(45deg);
+  -o-transform: scale(1.2) rotate(45deg);
+}
+
+.PhoneInputInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0.5rem;
+  font-size: 1rem;
+  color: black;
+  border-left: 1px solid #cccccc75;
+  padding-left: 0.75rem;
+}
+
+.PhoneInputInput::placeholder {
+  color: hsl(var(--muted-foreground));
+  /* Replace with your color variable */
+}
+
+.PhoneInputInput:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(var(--ring), 0.2);
+  /* Equivalent to ring-1 and ring-ring/20 */
+  --tw-ring-offset-width: 0px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.PhoneInputInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.PhoneInput:focus-within {
+  box-shadow: 0 0 0 1px rgba(var(--ring), 0.2);
+  /* Equivalent to ring-1 and ring-ring/20 */
+  --tw-ring-offset-width: 0px;
+}
+.shadow {
+  box-shadow: 0px 3px 20px 0 #00000017;
+}
+.PhoneInputInput {
+  font-size: 0.875rem;
+  /* Equivalent to md:text-sm */
+}
+
+html[dir="rtl"] .PhoneInputInput {
+  border-left: none;
+  border-right: 1px solid #cccccc75;
+  padding-right: 0.75rem;
+  padding-left: 0;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .PhoneInputCountryIcon {
+    width: 20px;
+    height: 14px;
+  }
+}
+
+html[dir="rtl"] .PhoneInput input::placeholder {
+  text-align: right !important;
+}
+
+.PhoneInput input::placeholder {
+  font-style: normal !important;
+}
+/* hide scroll bar */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+/* Chrome, Safari, Edge */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

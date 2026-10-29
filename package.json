@@ -1,0 +1,87 @@
+{
+  "name": "crm",
+  "version": "0.1.0",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "desktop:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:3000 && cross-env ELECTRON_DEV_SERVER_URL=http://localhost:3000 electron electron/main.js\"",
+    "desktop:start": "cross-env NODE_ENV=production electron electron/main.js",
+    "desktop:pack": "npm run build && electron-builder --dir",
+    "desktop:build": "npm run build && electron-builder --win --x64"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@reduxjs/toolkit": "^2.11.2",
+    "axios": "^1.15.0",
+    "clsx": "^2.1.1",
+    "cookies-next": "^6.1.1",
+    "framer-motion": "^12.38.0",
+    "libphonenumber-js": "^1.12.41",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.4",
+    "next-intl": "^4.9.1",
+    "qrcode": "^1.5.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-phone-number-input": "^3.4.16",
+    "react-redux": "^9.2.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.5.0",
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "wait-on": "^9.0.10"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
+  },
+  "build": {
+    "appId": "com.imothmr.crm",
+    "productName": "CRM",
+    "npmRebuild": false,
+    "directories": {
+      "output": "desktop-dist"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
+      "messages/**/*",
+      "package.json",
+      "next.config.ts",
+      "!.next/cache/**/*",
+      "!.next/dev/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "CRM-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
