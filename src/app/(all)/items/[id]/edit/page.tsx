@@ -281,10 +281,10 @@ export default function EditItemPage() {
         </div>
 
         {/* Cost */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Input
-              label="الفئة"
+              label="الفئه طبقا للشركه"
               type="number"
               name="cost"
               value={form.cost}
@@ -308,7 +308,7 @@ export default function EditItemPage() {
             )}
           </div>
 
-          <div>
+          {/* <div>
             <Input
               label="فئة البند طبقا للتحليل"
               type="number"
@@ -321,7 +321,7 @@ export default function EditItemPage() {
                 {errors.priceAfterCost}
               </p>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Notes */}
