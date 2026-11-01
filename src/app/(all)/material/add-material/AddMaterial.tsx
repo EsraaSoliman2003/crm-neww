@@ -38,6 +38,7 @@ type FormState = {
   price: string;
   validUntil: string;
   note: string;
+  brand: string;
   image: string;
 };
 
@@ -100,6 +101,7 @@ export default function AddMatreial({
     price: "",
     validUntil: "",
     note: "",
+    brand: "",
     image: "",
   });
 
@@ -143,6 +145,7 @@ export default function AddMatreial({
         price: String(adminSupplier?.price || ""),
         validUntil: "",
         note: material.notes || "",
+        brand: material.brand || "",
         image: material.image || "",
       });
 
@@ -285,6 +288,7 @@ export default function AddMatreial({
         entityCategoryMappingId,
         price: Number(form.price),
         notes: form.note,
+        brand: form.brand,
         image: imageFile,
       };
 
@@ -330,6 +334,7 @@ export default function AddMatreial({
         price: "",
         validUntil: "",
         note: "",
+        brand: "",
         image: "",
       });
 
@@ -578,6 +583,17 @@ export default function AddMatreial({
               <p className="text-red-500 text-sm">{errors.waste}</p>
             )}
           </div>
+        </div>
+
+        {/* Source / Brand */}
+        <div>
+          <Input
+            label="المصدر / الماركة"
+            name="brand"
+            value={form.brand}
+            placeholder="مثال: أسمنت السويس"
+            onChange={handleChange}
+          />
         </div>
 
         {/* Notes */}

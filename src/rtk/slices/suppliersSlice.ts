@@ -46,7 +46,8 @@ export const createSupplier = createAsyncThunk<string, Omit<Supplier, "id">>(
       phoneNumber: supplierData.phoneNumber,
       password: supplierData.password,
       countryCode: supplierData.countryCode,
-      entityCategoryMappingId: supplierData.entityCategoryMappingId,
+      categoryId: supplierData.categoryId,
+      brand: supplierData.brand,
     });
 
     return res.data;
@@ -61,14 +62,17 @@ export const updateSupplier = createAsyncThunk(
     email: string;
     phoneNumber: string;
     countryCode: string;
-    entityCategoryMappingId: number;
+    categoryId: number;
+    categoryName?: string;
+    brand: string | null;
   }) => {
     await instance.put(`/Supplier/${supplierData.id}`, {
       fullName: supplierData.name,
       email: supplierData.email,
       phoneNumber: supplierData.phoneNumber,
       countryCode: supplierData.countryCode,
-      entityCategoryMappingId: supplierData.entityCategoryMappingId,
+      categoryId: supplierData.categoryId,
+      brand: supplierData.brand,
     });
     return supplierData;
   },

@@ -22,10 +22,11 @@ import {
 } from "@/rtk/slices/suppliersSlice";
 import { validatePassword } from "@/utils/validatePassword ";
 
+// Suppliers only have a general category now; sub-categories are not used.
 type FormState = {
   name: string;
   mainCategory: string;
-  subCategory: string;
+  brand: string;
   email: string;
   countryCode: string;
   phone: string;
@@ -35,7 +36,7 @@ type FormState = {
 const emptyForm: FormState = {
   name: "",
   mainCategory: "",
-  subCategory: "",
+  brand: "",
   email: "",
   countryCode: "",
   phone: "",
@@ -69,12 +70,9 @@ export default function AddSupplierPage() {
     if (!isEdit || !supplierId || categories.length === 0) return;
     const supplier = suppliers.find((item) => item.id === supplierId);
     if (!supplier) return;
-    const category = categories.find(
-      (item) => item.categoryName === supplier.categoryName,
-    );
-    const subCategory = category?.subCategories.find(
-      (item) => item.subCategoryName === supplier.subCategoryName,
-    );
+    const category =
+      categories.find((item) => item.categoryId === supplier.categoryId) ??
+      categories.find((item) => item.categoryName === supplier.categoryName);
     const supplierPhone = supplier.phoneNumber ?? "";
     const fullPhone = supplierPhone.startsWith("+")
       ? supplierPhone
@@ -86,7 +84,7 @@ export default function AddSupplierPage() {
       setForm({
         name: supplier.name ?? "",
         mainCategory: String(category?.categoryId ?? ""),
-        subCategory: String(subCategory?.subCategoryId ?? ""),
+        brand: supplier.brand ?? "",
         email: supplier.email ?? "",
         countryCode: parsedSupplierPhone
           ? `+${parsedSupplierPhone.countryCallingCode}`
@@ -96,11 +94,6 @@ export default function AddSupplierPage() {
       }),
     );
   }, [categories, isEdit, supplierId, suppliers]);
-
-  const selectedCategory = categories.find(
-    (category) => String(category.categoryId) === form.mainCategory,
-  );
-  const subCategories = selectedCategory?.subCategories ?? [];
 
   const validate = () => {
     const nextErrors: Partial<FormState> = {};
@@ -112,7 +105,6 @@ export default function AddSupplierPage() {
     }
     if (!form.phone.trim()) nextErrors.phone = "رقم الهاتف مطلوب";
     if (!form.mainCategory) nextErrors.mainCategory = "التصنيف العام مطلوب";
-    if (!form.subCategory) nextErrors.subCategory = "التصنيف الفرعي مطلوب";
     if (form.phone && !isValidPhoneNumber(form.phone)) {
       nextErrors.phone = "رقم الهاتف غير صحيح";
     }
@@ -122,17 +114,19 @@ export default function AddSupplierPage() {
 
   const saveSupplier = async () => {
     if (!validate()) return;
-    const selectedSubCategory = subCategories.find(
-      (item) => String(item.subCategoryId) === form.subCategory,
+    const selectedCategory = categories.find(
+      (category) => String(category.categoryId) === form.mainCategory,
     );
-    if (!selectedSubCategory) return toast.error("اختر تصنيفًا صحيحًا");
+    if (!selectedCategory) return toast.error("اختر تصنيفًا صحيحًا");
     const parsed = parsePhoneNumber(form.phone);
     const commonData = {
       name: form.name.trim(),
       email: form.email.trim(),
       phoneNumber: parsed?.nationalNumber || "",
       countryCode: parsed ? `+${parsed.countryCallingCode}` : form.countryCode,
-      entityCategoryMappingId: selectedSubCategory.entityCategoryMappingId,
+      categoryId: selectedCategory.categoryId,
+      categoryName: selectedCategory.categoryName,
+      brand: form.brand.trim() || null,
     };
     try {
       if (isEdit) {
@@ -178,7 +172,7 @@ export default function AddSupplierPage() {
                 options={categories.map((category) => ({ value: String(category.categoryId), label: category.categoryName }))}
                 selected={form.mainCategory}
                 loading={loading}
-                onSelect={(option) => setForm((previous) => ({ ...previous, mainCategory: option.value, subCategory: "" }))}
+                onSelect={(option) => setForm((previous) => ({ ...previous, mainCategory: option.value }))}
                 linkType="button"
                 linkText=" + اضافة تصنيف عام"
                 onAdd={() =>
@@ -188,7 +182,6 @@ export default function AddSupplierPage() {
                       setForm((previous) => ({
                         ...previous,
                         mainCategory: String(category.id),
-                        subCategory: "",
                       }));
                       dispatch(fetchSubCategories(SuppliersNumber));
                     },
@@ -196,32 +189,13 @@ export default function AddSupplierPage() {
                 }
               />
             </FieldError>
-            <FieldError error={errors.subCategory}>
-              <Dropdown
-                label="التصنيف الفرعي"
-                placeholder="اختر التصنيف الفرعي"
-                options={subCategories.map((item) => ({ value: String(item.subCategoryId), label: item.subCategoryName }))}
-                selected={form.subCategory}
-                onSelect={(option) => setForm((previous) => ({ ...previous, subCategory: option.value }))}
-                linkType="button"
-                linkText="اضافة تصنيف فرعي +"
-                onAdd={() =>
-                  setCreateConfig({
-                    kind: "subcategory",
-                    entityTypeId: SuppliersNumber,
-                    defaultCategoryId: Number(form.mainCategory || 0),
-                    onCreated: async (subCategory) => {
-                      await dispatch(fetchSubCategories(SuppliersNumber)).unwrap();
-                      setForm((previous) => ({
-                        ...previous,
-                        mainCategory: String(subCategory.categoryId),
-                        subCategory: String(subCategory.subCategoryId),
-                      }));
-                    },
-                  })
-                }
-              />
-            </FieldError>
+            <Input
+              label="المصدر / الماركة"
+              placeholder="مثال: حديد عز"
+              name="brand"
+              value={form.brand}
+              onChange={(event) => setForm((previous) => ({ ...previous, brand: event.target.value }))}
+            />
           </div>
           <div className={`grid gap-5 ${isEdit ? "md:grid-cols-1" : "md:grid-cols-2"}`}>
             <FieldError error={errors.email}>

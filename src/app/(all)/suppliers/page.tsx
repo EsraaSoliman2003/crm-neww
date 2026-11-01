@@ -54,7 +54,7 @@ export default function Page() {
       countryCode: item.countryCode,
       entityCategoryMappingId: item.entityCategoryMappingId,
       categoryName: item.categoryName,
-      subCategoryName: item.subCategoryName,
+      brand: item.brand,
       materials: item.materials,
     }));
   };
@@ -68,8 +68,9 @@ export default function Page() {
             <h1 className="text-xl md:text-2xl font-bold">الموردين</h1>
           </div>
 
+          {/* Supplier sub-categories are no longer used, so their management
+              page (/suppliers/subcategories) isn't linked from here. */}
           <div className="flex gap-3">
-            <Button text="التصنيفات" href={"/suppliers/subcategories"} border />
             <Button text="+ اضافة مورد" href={"/suppliers/add-supplier"} />
           </div>
         </div>
@@ -92,8 +93,8 @@ export default function Page() {
               selectedSubCategory={selectedSubCategory}
               setSelectedSubCategoryAction={setSelectedSubCategory}
               categories={categoriesWithSubCategories}
-              supPlaceHolder="اختر تصنيف المورد"
               catPlaceHolder="اختر التصنيف العام"
+              hideSubCategory
             />
           }
           loading={loading}
@@ -114,16 +115,17 @@ export default function Page() {
             },
 
             {
-              key: "subCategoryName",
-              header: "التصنيف الفرعي",
-              filterable: true,
-              filterDependsOn: "categoryName",
-            },
-            {
               key: "name",
               header: "المورد",
               width: "auto",
               filterable: true,
+            },
+
+            {
+              key: "brand",
+              header: "المصدر / الماركة",
+              filterable: true,
+              render: (row) => row.brand || "-",
             },
 
             {

@@ -224,6 +224,13 @@ function MaterialPageContent() {
             },
 
             {
+              key: "brand",
+              header: "المصدر / الماركة",
+              render: (row) => row.brand || "-",
+              filterable: true,
+            },
+
+            {
               key: "unitName",
               header: "الوحدة",
               render: (row) => row.unitName || "-",

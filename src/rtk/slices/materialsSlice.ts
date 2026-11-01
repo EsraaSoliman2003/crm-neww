@@ -50,6 +50,8 @@ export type CreateMaterialDto = {
   supplierId: number;
   price: number;
   notes: string;
+  // المصدر / الماركة (optional)
+  brand?: string;
   image: File | null;
 };
 export const createMaterial = createAsyncThunk(
@@ -67,6 +69,7 @@ export const createMaterial = createAsyncThunk(
     formData.append("supplierId", String(materialData.supplierId));
     formData.append("price", String(materialData.price));
     formData.append("notes", materialData.notes);
+    formData.append("brand", materialData.brand ?? "");
     if (materialData.image) {
       formData.append("image", materialData.image);
     }
@@ -121,6 +124,7 @@ export const createMaterialBySupplier = createAsyncThunk(
       String(materialData.entityCategoryMappingId),
     );
     formData.append("Notes", materialData.notes);
+    formData.append("Brand", materialData.brand ?? "");
     if (materialData.image) {
       formData.append("Image", materialData.image);
     }
@@ -153,6 +157,7 @@ export const updateMaterial = createAsyncThunk(
     formData.append("supplierId", String(materialData.supplierId));
     formData.append("price", String(materialData.price));
     formData.append("notes", materialData.notes);
+    formData.append("brand", materialData.brand ?? "");
 
     if (materialData.image) {
       formData.append("image", materialData.image);

@@ -15,6 +15,7 @@ export interface Material {
   categoryName: string;
   subCategoryName: string;
   notes: string;
+  brand?: string;
 }
 
 export interface MaterialWithSuppliers {
@@ -126,5 +127,6 @@ export type UpdateMaterialDto = {
   supplierId: number;
   price: number;
   notes: string;
+  brand?: string;
   image:File | null
 };

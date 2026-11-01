@@ -35,6 +35,9 @@ type Props = {
 
   supPlaceHolder?: string;
   catPlaceHolder?: string;
+
+  // For lists that only use the general category (e.g. suppliers).
+  hideSubCategory?: boolean;
 };
 
 export default function CategoryFilter({
@@ -53,6 +56,7 @@ export default function CategoryFilter({
 
   supPlaceHolder,
   catPlaceHolder,
+  hideSubCategory = false,
 }: Props) {
   const selectedCategoryData = categories.find(
     (cat) => String(cat.categoryId) === selectedCategory.value,
@@ -98,7 +102,7 @@ export default function CategoryFilter({
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className={`grid gap-4 ${hideSubCategory ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
         <Input
           name="search"
           type="text"
@@ -121,15 +125,17 @@ export default function CategoryFilter({
           }}
         />
 
-        <Dropdown
-          placeholder={supPlaceHolder}
-          options={subCategories.map((s) => ({
-            value: String(s.subCategoryId),
-            label: s.subCategoryName,
-          }))}
-          selected={selectedSubCategory.value}
-          onSelect={(opt) => setSelectedSubCategoryAction(opt)}
-        />
+        {!hideSubCategory && (
+          <Dropdown
+            placeholder={supPlaceHolder}
+            options={subCategories.map((s) => ({
+              value: String(s.subCategoryId),
+              label: s.subCategoryName,
+            }))}
+            selected={selectedSubCategory.value}
+            onSelect={(opt) => setSelectedSubCategoryAction(opt)}
+          />
+        )}
       </div>
     </div>
   );

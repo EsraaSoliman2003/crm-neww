@@ -90,6 +90,8 @@ export interface Material {
   categoryName?: string;
   subCategoryName?: string;
   notes?: string;
+  // المصدر / الماركة
+  brand?: string | null;
   supplierName?: string | null;
   price?: string | null;
   validUntil?: string | null;
@@ -150,9 +152,14 @@ export interface Supplier {
   phoneNumber: string;
   password?: string;
   countryCode?: string;
-  entityCategoryMappingId: number;
+  // Suppliers no longer have sub-categories: they're linked to a general
+  // category only (categoryId). entityCategoryMappingId is kept for old data.
+  entityCategoryMappingId?: number;
+  categoryId?: number | null;
   categoryName?: string;
   subCategoryName?: string;
+  // المصدر / الماركة
+  brand?: string | null;
   materials?: Material[] | null;
 }
 
