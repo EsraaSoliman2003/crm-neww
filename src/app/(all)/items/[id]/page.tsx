@@ -196,7 +196,6 @@ const buildAnalyzedItemReportHtml = (
     ]);
 
   return `
-    <h2>${escapeHtml(`تقرير تحليل البند - ${item.name}`)}</h2>
     ${buildSection("ملخص البند", ["البند", "القيمة"], summaryRows)}
     ${buildSection(
     "المصنعيات",
@@ -475,7 +474,7 @@ export default function ManufacturingDetailsPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "تفاصيل تحليل البند");
 
     const safeFileName =
-      reportTitle.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-").trim() ||
+      `${selectedItem.id}-${selectedItem.subCategoryName}` ||
       "تقرير تحليل البند";
     XLSX.writeFile(workbook, `${safeFileName}.xlsx`, { compression: true });
   };

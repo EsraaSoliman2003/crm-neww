@@ -240,7 +240,7 @@ export default function ItemForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Input
-              label="الفئة"
+              label="الفئه طبقا للشركه"
               type="number"
               name="cost"
               value={form.cost}

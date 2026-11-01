@@ -537,158 +537,6 @@ export default function EstimateDetailsUI() {
         ]),
       ];
 
-      const materialsData: (string | number)[][] = [
-        [
-          "رقم البند",
-          "اسم البند",
-          "الخامة",
-          "المورد",
-          "سعر الوحدة",
-          "الكمية",
-          "الإجمالي",
-        ],
-        ...analyses.flatMap(({ item, analysis }) =>
-          (analysis.itemSupplierMaterials || []).map((material) => [
-            item.id,
-            item.name,
-            material.supplierMaterial?.materialName ?? "",
-            supplierNames.get(material.supplierMaterial?.id ?? 0) ?? "",
-            material.supplierMaterial?.price ?? 0,
-            material.quantity ?? 0,
-            (material.supplierMaterial?.price ?? 0) * (material.quantity ?? 0),
-          ]),
-        ),
-      ];
-
-      const testsData: (string | number)[][] = [
-        [
-          "رقم البند",
-          "اسم البند",
-          "الاختبار",
-          "تكلفة الوحدة",
-          "معدل الاختبار",
-          "الإجمالي",
-        ],
-        ...analyses.flatMap(({ item, analysis }) =>
-          (analysis.itemTests || []).map((test) => [
-            item.id,
-            item.name,
-            test.test?.name ?? "",
-            test.test?.costPerUnit ?? 0,
-            test.unitRatePerTest ?? 0,
-            (test.test?.costPerUnit ?? 0) * (test.unitRatePerTest ?? 0),
-          ]),
-        ),
-      ];
-
-      const manufacturingsData: (string | number)[][] = [
-        [
-          "رقم البند",
-          "اسم البند",
-          "المصنعية",
-          "معدل الأداء",
-          "إجمالي اليوميات",
-          "ملاحظات",
-        ],
-        ...analyses.flatMap(({ item, analysis }) =>
-          (analysis.itemManufacturings || []).map((manufacturing) => [
-            item.id,
-            item.name,
-            manufacturing.manufacturing?.name ?? "",
-            manufacturing.manufacturing?.performanceRate ?? 0,
-            manufacturing.manufacturing?.totalDailyPrice ?? 0,
-            manufacturing.manufacturing?.notes ?? "",
-          ]),
-        ),
-      ];
-
-      const dailiesData: (string | number)[][] = [
-        [
-          "رقم البند",
-          "اسم البند",
-          "المصنعية",
-          "اليومية",
-          "التصنيف",
-          "سعر اليومية",
-          "الكمية",
-          "الإجمالي",
-        ],
-        ...analyses.flatMap(({ item, analysis }) =>
-          (analysis.itemManufacturings || []).flatMap((manufacturing) =>
-            (manufacturing.manufacturing?.dailies || []).map((daily) => [
-              item.id,
-              item.name,
-              manufacturing.manufacturing?.name ?? "",
-              daily.daily?.name ?? "",
-              daily.daily?.category === 0
-                ? "عمالة"
-                : daily.daily?.category === 1
-                  ? "معدة"
-                  : "",
-              daily.daily?.pricePerDay ?? 0,
-              daily.quantity ?? 0,
-              (daily.daily?.pricePerDay ?? 0) * (daily.quantity ?? 0),
-            ]),
-          ),
-        ),
-      ];
-
-      const reportData: (string | number)[][] = [];
-      const sectionTitleRows: number[] = [];
-      const appendSection = (title: string, data: (string | number)[][]) => {
-        if (reportData.length > 0) reportData.push([]);
-        sectionTitleRows.push(reportData.length);
-        reportData.push([title], ...data);
-      };
-
-      appendSection("بيانات المقايسة", summaryData);
-      appendSection("بنود المقايسة", itemsData);
-
-      if (analyses.length > 0) {
-        appendSection("ملخص تحليل البنود", analysisSummaryData);
-        appendSection("خامات البنود", materialsData);
-        appendSection("اختبارات البنود", testsData);
-        appendSection("مصنعيات البنود", manufacturingsData);
-        appendSection("يوميات المصنعيات", dailiesData);
-      }
-
-      const reportSheet = XLSX.utils.aoa_to_sheet(reportData);
-      const maxColumns = Math.max(...reportData.map((row) => row.length));
-      const columnWidths = [16, 38, 20, 28, 20, 28, 20, 28, 22, 20, 22, 20, 38];
-      reportSheet["!cols"] = Array.from(
-        { length: maxColumns },
-        (_, column) => ({
-          wch: columnWidths[column] ?? 22,
-        }),
-      );
-      reportSheet["!merges"] = sectionTitleRows.map((row) => ({
-        s: { r: row, c: 0 },
-        e: { r: row, c: maxColumns - 1 },
-      }));
-      reportSheet["!rows"] = Array.from(
-        { length: reportData.length },
-        (_, row) => (sectionTitleRows.includes(row) ? { hpt: 24 } : {}),
-      );
-
-      const reportRange = reportSheet["!ref"]
-        ? XLSX.utils.decode_range(reportSheet["!ref"])
-        : null;
-      if (reportRange) {
-        for (let row = reportRange.s.r; row <= reportRange.e.r; row += 1) {
-          for (
-            let column = reportRange.s.c;
-            column <= reportRange.e.c;
-            column += 1
-          ) {
-            const cell =
-              reportSheet[XLSX.utils.encode_cell({ r: row, c: column })];
-            if (cell?.t === "n") {
-              cell.z = Number.isInteger(cell.v) ? "#,##0" : "#,##0.00";
-            }
-          }
-        }
-      }
-
       const workbook = XLSX.utils.book_new();
       workbook.Props = {
         Title: reportTitle,
@@ -697,11 +545,224 @@ export default function EstimateDetailsUI() {
         CreatedDate: new Date(),
       };
       workbook.Workbook = { Views: [{ RTL: true }] };
+
+      const appendSection = (
+        reportData: (string | number)[][],
+        sectionTitleRows: number[],
+        title: string,
+        data: (string | number)[][],
+      ) => {
+        if (reportData.length > 0) reportData.push([]);
+        sectionTitleRows.push(reportData.length);
+        reportData.push([title], ...data);
+      };
+
+      const createReportSheet = (
+        reportData: (string | number)[][],
+        sectionTitleRows: number[],
+        columnWidths: number[],
+      ) => {
+        const sheet = XLSX.utils.aoa_to_sheet(reportData);
+        const maxColumns = Math.max(...reportData.map((row) => row.length));
+        sheet["!cols"] = Array.from({ length: maxColumns }, (_, column) => ({
+          wch: columnWidths[column] ?? 22,
+        }));
+        sheet["!merges"] = sectionTitleRows.map((row) => ({
+          s: { r: row, c: 0 },
+          e: { r: row, c: maxColumns - 1 },
+        }));
+        sheet["!rows"] = Array.from({ length: reportData.length }, (_, row) =>
+          sectionTitleRows.includes(row) ? { hpt: 24 } : {},
+        );
+
+        const range = sheet["!ref"] ? XLSX.utils.decode_range(sheet["!ref"]) : null;
+        if (range) {
+          for (let row = range.s.r; row <= range.e.r; row += 1) {
+            for (let column = range.s.c; column <= range.e.c; column += 1) {
+              const cell = sheet[XLSX.utils.encode_cell({ r: row, c: column })];
+              if (cell?.t === "n") {
+                cell.z = Number.isInteger(cell.v) ? "#,##0" : "#,##0.00";
+              }
+            }
+          }
+        }
+
+        return sheet;
+      };
+
+      const summaryReportData: (string | number)[][] = [];
+      const summarySectionTitleRows: number[] = [];
+      appendSection(
+        summaryReportData,
+        summarySectionTitleRows,
+        "بيانات المقايسة",
+        summaryData,
+      );
+      appendSection(
+        summaryReportData,
+        summarySectionTitleRows,
+        "بنود المقايسة",
+        itemsData,
+      );
+      if (analysisSummaryData.length > 1) {
+        appendSection(
+          summaryReportData,
+          summarySectionTitleRows,
+          "ملخص تحليل البنود",
+          analysisSummaryData,
+        );
+      }
+
       XLSX.utils.book_append_sheet(
         workbook,
-        reportSheet,
-        "المقايسة وتحليل البنود",
+        createReportSheet(
+          summaryReportData,
+          summarySectionTitleRows,
+          [38, 38, 20, 28, 20, 28, 20, 28, 22, 20, 22],
+        ),
+        "ملخص المقايسة",
       );
+
+      const analysisByItemId = new Map(
+        analyses.map(({ item, analysis }) => [item.id, analysis]),
+      );
+      for (const item of estimateItemsWithMetrics) {
+        const analysis = analysisByItemId.get(item.id);
+        const itemData: (string | number)[][] = [];
+        const itemSectionTitleRows: number[] = [];
+
+        appendSection(itemData, itemSectionTitleRows, "بيانات البند", [
+          ["البيان", "القيمة"],
+          ["رقم البند", item.id],
+          ["اسم البند", item.name ?? ""],
+          ["الوحدة", item.unit?.value ?? ""],
+          [
+            "التصنيف",
+            item.entityCategoryMapping?.category?.name ??
+              item.categoryName ??
+              "",
+          ],
+          [
+            "التصنيف الفرعي",
+            item.entityCategoryMapping?.subCategory?.name ??
+              item.subCategoryName ??
+              "",
+          ],
+          ["الكمية", item.estimateQuantity],
+          ["التكلفة", item.cost ?? 0],
+          ["الإجمالي", item.estimateTotal ?? 0],
+          ["السعر بعد التكلفة", item.costAfterRate ?? 0],
+          ["حالة التحليل", item.isAnalyzed ? "تم التحليل" : "لم يتم التحليل"],
+          ["ملاحظات", item.note ?? ""],
+        ]);
+
+        appendSection(itemData, itemSectionTitleRows, "ملخص التحليل", [
+          ["البيان", "القيمة"],
+          ...(analysis
+            ? [
+                ["تكلفة البند", analysis.cost ?? 0],
+                ["السعر بعد التكلفة", analysis.costAfterRate ?? 0],
+                ["إجمالي الخامات", analysis.totalMaterialPrice ?? 0],
+                ["إجمالي الاختبارات", analysis.totalTestPrice ?? 0],
+                ["إجمالي المصنعيات", analysis.totalManufacturingPrice ?? 0],
+                ["إجمالي التحليل", analysis.totalPrice ?? 0],
+                ["ملاحظات البند", analysis.note ?? ""],
+              ]
+            : [
+                [
+                  "حالة التحليل",
+                  item.isAnalyzed ? "تعذر تحميل التحليل" : "لم يتم التحليل",
+                ],
+              ]),
+        ]);
+
+        if (analysis) {
+          const materials = (analysis.itemSupplierMaterials || []).map(
+            (material) => [
+              material.supplierMaterial?.materialName ?? "",
+              supplierNames.get(material.supplierMaterial?.id ?? 0) ?? "",
+              material.supplierMaterial?.price ?? 0,
+              material.quantity ?? 0,
+              (material.supplierMaterial?.price ?? 0) *
+                (material.quantity ?? 0),
+            ],
+          );
+          appendSection(itemData, itemSectionTitleRows, "خامات البند", [
+            ["الخامة", "المورد", "سعر الوحدة", "الكمية", "الإجمالي"],
+            ...(materials.length > 0 ? materials : [["لا توجد بيانات"]]),
+          ]);
+
+          const tests = (analysis.itemTests || []).map((test) => [
+            test.test?.name ?? "",
+            test.test?.costPerUnit ?? 0,
+            test.unitRatePerTest ?? 0,
+            (test.test?.costPerUnit ?? 0) * (test.unitRatePerTest ?? 0),
+          ]);
+          appendSection(itemData, itemSectionTitleRows, "اختبارات البند", [
+            ["الاختبار", "تكلفة الوحدة", "معدل الاختبار", "الإجمالي"],
+            ...(tests.length > 0 ? tests : [["لا توجد بيانات"]]),
+          ]);
+
+          const manufacturings = (analysis.itemManufacturings || []).map(
+            (manufacturing) => [
+              manufacturing.manufacturing?.name ?? "",
+              manufacturing.manufacturing?.performanceRate ?? 0,
+              manufacturing.manufacturing?.totalDailyPrice ?? 0,
+              manufacturing.manufacturing?.notes ?? "",
+            ],
+          );
+          appendSection(itemData, itemSectionTitleRows, "مصنعيات البند", [
+            ["المصنعية", "معدل الأداء", "إجمالي اليوميات", "ملاحظات"],
+            ...(manufacturings.length > 0
+              ? manufacturings
+              : [["لا توجد بيانات"]]),
+          ]);
+
+          const dailies = (analysis.itemManufacturings || []).flatMap(
+            (manufacturing) =>
+              (manufacturing.manufacturing?.dailies || []).map((daily) => [
+                manufacturing.manufacturing?.name ?? "",
+                daily.daily?.name ?? "",
+                daily.daily?.category === 0
+                  ? "عمالة"
+                  : daily.daily?.category === 1
+                    ? "معدة"
+                    : "",
+                daily.daily?.pricePerDay ?? 0,
+                daily.quantity ?? 0,
+                (daily.daily?.pricePerDay ?? 0) * (daily.quantity ?? 0),
+              ]),
+          );
+          appendSection(itemData, itemSectionTitleRows, "يوميات المصنعيات", [
+            [
+              "المصنعية",
+              "اليومية",
+              "التصنيف",
+              "سعر اليومية",
+              "الكمية",
+              "الإجمالي",
+            ],
+            ...(dailies.length > 0 ? dailies : [["لا توجد بيانات"]]),
+          ]);
+        }
+
+        const safeItemName =
+          (item.name || "بند")
+            .replace(/[\\/?*[\]:]/g, "-")
+            .replace(/[\u0000-\u001f]/g, " ")
+            .replace(/^'+|'+$/g, "")
+            .trim() || "بند";
+        const sheetName = `${item.id}-${safeItemName}`
+          .slice(0, 31)
+          .replace(/'+$/g, "");
+        XLSX.utils.book_append_sheet(
+          workbook,
+          createReportSheet(itemData, itemSectionTitleRows, [
+            38, 38, 20, 28, 20, 28,
+          ]),
+          sheetName,
+        );
+      }
 
       const safeFileName =
         reportTitle.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-").trim() ||
