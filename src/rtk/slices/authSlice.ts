@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import instance from "@/lib/axios";
 import axios from "axios";
-import { User, AuthResponse } from "@/utils/dtos";
+import { User, AuthResponse, OtpSentResponse, ApiErrorBody } from "@/utils/dtos";
 
 /* ===========================
    Types
@@ -65,7 +65,7 @@ export const registerUser = createAsyncThunk<
 export const loginUser = createAsyncThunk<
   AuthResponse,
   unknown,
-  { rejectValue: { title: string } }
+  { rejectValue: ApiErrorBody }
 >(
   "auth/login",
   async (data, { rejectWithValue }) => {
@@ -80,6 +80,42 @@ export const loginUser = createAsyncThunk<
     }
   }
 );
+
+/* ===========================
+   Phone verification (WhatsApp OTP)
+   Errors are already shown as toasts by the axios interceptor.
+=========================== */
+
+const toApiError = (error: unknown): ApiErrorBody =>
+  axios.isAxiosError(error) && error.response?.data
+    ? error.response.data
+    : { title: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا." };
+
+export const verifyPhone = createAsyncThunk<
+  { message: string },
+  { userId: number; code: string },
+  { rejectValue: ApiErrorBody }
+>("auth/verifyPhone", async (data, { rejectWithValue }) => {
+  try {
+    const res = await instance.post("Account/verify-phone", data);
+    return res.data;
+  } catch (error: unknown) {
+    return rejectWithValue(toApiError(error));
+  }
+});
+
+export const resendOtp = createAsyncThunk<
+  OtpSentResponse,
+  { userId: number },
+  { rejectValue: ApiErrorBody }
+>("auth/resendOtp", async (data, { rejectWithValue }) => {
+  try {
+    const res = await instance.post("Account/resend-otp", data);
+    return res.data;
+  } catch (error: unknown) {
+    return rejectWithValue(toApiError(error));
+  }
+});
 
 /* ===========================
    Logout
@@ -113,6 +149,9 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
+        // Accounts waiting for phone verification get no token; don't treat
+        // them as signed in.
+        if (action.payload.requiresPhoneVerification) return;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.roles = action.payload.roles;

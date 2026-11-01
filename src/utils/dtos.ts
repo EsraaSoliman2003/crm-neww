@@ -23,6 +23,23 @@ export interface AuthResponse {
   user: User;
   token: string;
   roles: string[];
+  // Supplier, company and engineer sign-ups: no token yet; the phone must be
+  // verified with the WhatsApp code, then an admin approves the account.
+  requiresPhoneVerification?: boolean;
+  otpSent?: boolean;
+  otpError?: string | null;
+}
+
+export interface OtpSentResponse {
+  userId: number;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+}
+
+// Shape of the API's error body (ValidationProblemDetails).
+export interface ApiErrorBody {
+  title: string;
+  errors?: Record<string, string[]>;
 }
 
 export interface Company {

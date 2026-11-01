@@ -14,6 +14,7 @@ import {
 } from "@/validation/registerSchema";
 import { setPhoneData } from "@/rtk/slices/phoneSlice";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface UseRegisterFormReturn extends Pick<
   UseFormReturn<RegisterSchemaType>,
@@ -32,6 +33,7 @@ export const useRegisterForm = (
 ): UseRegisterFormReturn => {
   const t = useTranslations();
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
   const [openRecoveryModal, setOpenRecoveryModal] = useState(false);
 
@@ -100,6 +102,18 @@ export const useRegisterForm = (
       }
 
       if (registerUser.fulfilled.match(resultAction)) {
+        const { user, requiresPhoneVerification, otpSent } = resultAction.payload;
+
+        // Supplier/company/engineer: verify the phone with the WhatsApp code
+        // first. If the code couldn't be sent, the screen offers a resend.
+        if (requiresPhoneVerification) {
+          if (otpSent) {
+            toast.success("تم إنشاء الحساب، أدخل رمز التحقق المرسل على واتساب");
+          }
+          router.push(`/verify-phone?userId=${user.id}${otpSent ? "&sent=1" : ""}`);
+          return;
+        }
+
         toast.success("تم ارسال طلب التسحيل بنجاح");
         setIsSubmittedSuccessfully(true);
         form.reset({
