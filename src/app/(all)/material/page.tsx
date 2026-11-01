@@ -342,8 +342,10 @@ function MaterialPageContent() {
               key: "notes",
               header: "الملاحظات",
               render: (row) => row.notes || "-",
+              // كانت min-w-[20vw] وبتعمل تمرير أفقي بعد إضافة عمود المصدر / الماركة؛
+              // النص الطويل بيلف جوه الخانة بدل ما يوسعها
               className:
-                "whitespace-normal! min-w-[20vw]",
+                "whitespace-normal! wrap-break-word! min-w-[10vw] max-w-[15vw]",
             },
 
             {
