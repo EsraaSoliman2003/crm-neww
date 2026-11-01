@@ -122,9 +122,28 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          # Keys pasted from Windows can carry \r line endings, which OpenSSH rejects.
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
+
+          # Fail early with a clear message instead of a bare "Permission denied".
+          if ! ssh-keygen -y -P "" -f ~/.ssh/id_deploy > ~/.ssh/id_deploy.pub 2>/dev/null; then
+            echo "::error::VPS_SSH_KEY is not a usable private key: it is the public key, is incomplete (needs the BEGIN/END lines), or has a passphrase."
+            exit 1
+          fi
+          # The fingerprint is not secret; compare it with `ssh-keygen -lf ~/.ssh/authorized_keys` on the server.
+          echo "Deploy key fingerprint: $(ssh-keygen -lf ~/.ssh/id_deploy.pub)"
+
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          # Only this key, and never fall back to a password prompt (also used by rsync).
+          cat > ~/.ssh/config <<CONFIG
+          Host $VPS_HOST
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            BatchMode yes
+          CONFIG
+          chmod 600 ~/.ssh/config
 
       # Second guard, on the box: the directory must already exist and be
       # either empty (apart from .env files) or a previous deploy (has
