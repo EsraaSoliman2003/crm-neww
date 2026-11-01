@@ -36,6 +36,30 @@ type EstimateItemWithMetrics = Estimate["items"][number] & {
   estimateTotal: number;
 };
 
+// Estimate items are shown, printed and exported grouped by general category,
+// then sub-category. Items in the same sub-category keep the order they came
+// in (Array.sort is stable), and items without a category go last.
+type EstimateItem = Estimate["items"][number];
+
+const categoryCollator = new Intl.Collator("ar", { numeric: true, sensitivity: "base" });
+
+const categoryNameOf = (item: EstimateItem) =>
+  (item.entityCategoryMapping?.category?.name || item.categoryName || "").trim();
+
+const subCategoryNameOf = (item: EstimateItem) =>
+  (item.entityCategoryMapping?.subCategory?.name || item.subCategoryName || "").trim();
+
+const compareNames = (a: string, b: string) => {
+  if (a === b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return categoryCollator.compare(a, b);
+};
+
+const compareItemsByCategory = (a: EstimateItem, b: EstimateItem) =>
+  compareNames(categoryNameOf(a), categoryNameOf(b)) ||
+  compareNames(subCategoryNameOf(a), subCategoryNameOf(b));
+
 const NO_DATA = "لا توجد بيانات";
 
 const formatValue = (value: number | string | null | undefined) =>
@@ -318,7 +342,8 @@ export default function EstimateDetailsUI() {
   };
   // Add Items
   if (loading) return <Loading />;
-  const estimateItems = estimateD?.items ?? [];
+  // Sorted copy: the table, the PDF and the Excel export all use this order.
+  const estimateItems = [...(estimateD?.items ?? [])].sort(compareItemsByCategory);
   const itemQuantityMap = new Map(
     itemQuantities.map((item) => [item.itemId, item.quantity]),
   );
@@ -444,9 +469,7 @@ export default function EstimateDetailsUI() {
     setExportingExcel(true);
 
     try {
-      const analyzedItems = (estimateD.items || []).filter(
-        (item) => item.isAnalyzed,
-      );
+      const analyzedItems = estimateItems.filter((item) => item.isAnalyzed);
       const loadedAnalyses = await Promise.all(
         analyzedItems.map(async (item) => {
           try {
