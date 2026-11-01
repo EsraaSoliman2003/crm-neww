@@ -3,6 +3,14 @@ import axios from "axios";
 import { deleteCookie, getCookie } from "cookies-next";
 import { toast } from "sonner";
 
+// `silent: true` on a request skips the error toast, for background requests
+// such as notification polling that would otherwise toast every interval.
+declare module "axios" {
+  interface AxiosRequestConfig {
+    silent?: boolean;
+  }
+}
+
 let isLoggingOut = false;
 
 const instance = axios.create({
@@ -54,6 +62,8 @@ instance.interceptors.response.use(
 
         return Promise.reject(error);
       }
+
+      if (error.config?.silent) return Promise.reject(error);
 
       const message =
         error.response?.data?.title ||

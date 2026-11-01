@@ -3,6 +3,7 @@
 import React from "react";
 import BtnMenu from "./_components/BtnMenu";
 import SidebarUser from "../Sidebar/_components/SidebarUser";
+import NotificationBell from "./_components/NotificationBell";
 
 const Navbar: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const Navbar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-6">
+          <NotificationBell />
           <SidebarUser icon />
         </div>
       </div>
