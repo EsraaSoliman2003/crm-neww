@@ -68,7 +68,6 @@ export default function CreateSimilarItemPage() {
   const searchParams = useSearchParams();
   const sourceItemId = Number(params.id);
   const estimateId = Number(searchParams.get("estimateId"));
-  const sourceIsAnalyzed = searchParams.get("sourceAnalyzed") !== "false";
   const { selectedItem, analyzedItem, creating } = useAppSelector(
     (state) => state.items,
   );
@@ -95,7 +94,9 @@ export default function CreateSimilarItemPage() {
   useEffect(() => {
     dispatch(fetchItemById(sourceItemId));
     dispatch(fetchCategories());
-    if (sourceIsAnalyzed) dispatch(fetchAnalyzeItem(sourceItemId));
+    // Always load the base item's analysis: the "analyzed" flag is set by hand,
+    // so an item can have an analysis without it.
+    dispatch(fetchAnalyzeItem(sourceItemId));
     dispatch(fetchUnits());
     dispatch(fetchSubCategories(ItemsNumber));
     dispatch(materialsItems());
@@ -103,7 +104,7 @@ export default function CreateSimilarItemPage() {
     dispatch(fetchTests());
     dispatch(fetchManufacturing({ page: 1, pageSize: 1000 }));
     dispatch(fetchAddedValues());
-  }, [dispatch, sourceIsAnalyzed, sourceItemId]);
+  }, [dispatch, sourceItemId]);
 
   useEffect(() => {
     if (basicHydrated || selectedItem?.id !== sourceItemId) return;
@@ -167,12 +168,7 @@ export default function CreateSimilarItemPage() {
 
   useEffect(() => {
     if (percentageHydrated || addedValuesLoading) return;
-    if (
-      sourceIsAnalyzed &&
-      (!analyzedItem || analyzedItem.id !== sourceItemId)
-    ) {
-      return;
-    }
+    if (!analyzedItem || analyzedItem.id !== sourceItemId) return;
 
     const savedMultiplier = analyzedItem?.totalAddedValue;
 
@@ -194,7 +190,6 @@ export default function CreateSimilarItemPage() {
     analyzedItem,
     calculatedPercentage,
     percentageHydrated,
-    sourceIsAnalyzed,
     sourceItemId,
   ]);
 
@@ -254,6 +249,9 @@ export default function CreateSimilarItemPage() {
           costAfterRate: Number(basicForm.costAfterRate || 0),
           note: basicForm.note || null,
           estimateId,
+          // Links the similar item to its base item, so a "general" save of
+          // the base item's analysis reaches it too.
+          sourceItemId,
           totalAddedValue: percent / 100 + 1,
           suppierMaterials: analysisForm.supplierMaterials.length
             ? analysisForm.supplierMaterials

@@ -1026,20 +1026,29 @@ export default function EstimateDetailsUI() {
               header: "تحليل",
               width: "100px",
               className: "whitespace-nowrap!",
-              render: (row) =>
-                row.isAnalyzed ? (
-                  <div className="bg-green-100 text-green-600 px-3 py-1 text-xs w-fit mx-auto">
-                    تم التحليل
-                  </div>
-                ) : (
+              // Opened in edit mode with this estimate, so the analysis page
+              // loads any existing analysis and offers "this item only" vs
+              // "general" saving.
+              render: (row) => (
+                <div className="flex flex-col items-center gap-1">
+                  {row.isAnalyzed && (
+                    <div className="bg-green-100 text-green-600 px-3 py-1 text-xs w-fit">
+                      تم التحليل
+                    </div>
+                  )}
                   <Link
-                    href={`/items/${row.id}/analyze`}
+                    href={`/items/${row.id}/analyze?mode=edit&estimateId=${id}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-orange-500 text-white px-3 py-1 text-xs hover:bg-orange-600 transition block w-fit mx-auto"
+                    className={`${
+                      row.isAnalyzed
+                        ? "border border-orange-500 text-orange-600 hover:bg-orange-50"
+                        : "bg-orange-500 text-white hover:bg-orange-600"
+                    } px-3 py-1 text-xs transition block w-fit`}
                   >
-                    تحليل البند
+                    {row.isAnalyzed ? "تعديل التحليل" : "تحليل البند"}
                   </Link>
-                ),
+                </div>
+              ),
             },
             {
               key: "actions",

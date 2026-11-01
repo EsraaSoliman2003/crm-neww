@@ -198,6 +198,11 @@ interface AnalyzePayload {
     manufacturingId: number;
   }[];
   totalAddedValue:number
+  // From an estimate: true saves the analysis for this estimate's item only
+  // (the API makes a private copy if the item is shared); false saves it for
+  // the item in general and every similar item that follows it.
+  saveForCurrentOnly?: boolean;
+  estimateId?: number;
 }
 
 export interface CreateSimilarItemPayload {
@@ -208,6 +213,8 @@ export interface CreateSimilarItemPayload {
   costAfterRate: number;
   note: string | null;
   estimateId: number;
+  // The base item; when no analysis is sent the API copies the base item's.
+  sourceItemId?: number;
   totalAddedValue: number;
   suppierMaterials?: {
     supplierMaterialId: number;

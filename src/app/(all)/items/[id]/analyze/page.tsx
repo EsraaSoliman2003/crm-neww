@@ -93,6 +93,9 @@ export default function ItemsPage() {
   const params = useParams();
   const id = Number(params?.id);
   const isEditMode = searchParams.get("mode") === "edit";
+  // Opened from an estimate: offer saving for this estimate's item only, or
+  // for the item in general.
+  const estimateId = Number(searchParams.get("estimateId")) || null;
   const selectedMasterManufacturingId = Number(
     searchParams.get("selectManufacturing"),
   );
@@ -391,7 +394,7 @@ export default function ItemsPage() {
   //   return Object.keys(errors).length === 0;
   // };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (saveForCurrentOnly = false) => {
     // if (!validateForm()) {
     //   toast.error("من فضلك أكمل بيانات تحليل البند");
     //   return;
@@ -418,6 +421,7 @@ export default function ItemsPage() {
         })),
         manufacturings: form.manufacturings,
         totalAddedValue: percent / 100 + 1,
+        ...(estimateId ? { estimateId, saveForCurrentOnly } : {}),
       };
 
       await dispatch(
@@ -431,7 +435,13 @@ export default function ItemsPage() {
       }
 
       toast.success(
-        isEditMode ? "تم تعديل تحليل البند بنجاح" : "تم تحليل البند بنجاح",
+        estimateId
+          ? saveForCurrentOnly
+            ? "تم حفظ التحليل لهذا البند في المقايسة فقط"
+            : "تم حفظ التحليل بشكل عام للبند والبنود الشبيهة"
+          : isEditMode
+            ? "تم تعديل تحليل البند بنجاح"
+            : "تم تحليل البند بنجاح",
       );
 
       if (!isEditMode) {
@@ -443,7 +453,11 @@ export default function ItemsPage() {
         });
       }
 
-      router.push(isEditMode ? `/items/${id}` : "/items");
+      if (estimateId) {
+        router.push(`/estimates/${estimateId}`);
+      } else {
+        router.push(isEditMode ? `/items/${id}` : "/items");
+      }
     } catch (error) {
       console.log(error);
     }finally{
@@ -502,13 +516,37 @@ export default function ItemsPage() {
       />
       <DisplayTotalSection form={form} percentage={percent} />
 
-      <div className="flex justify-end mt-6">
-        <Button
-          text={isEditMode ? "تعديل تحليل البند" : "تحليل البند"}
-          onClick={handleSubmit}
-          loading={loading}
-        />
-      </div>
+      {estimateId ? (
+        <div className="mt-6 flex flex-col items-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              text="حفظ التحليل للبند الحالي فقط"
+              border
+              onClick={() => handleSubmit(true)}
+              loading={loading}
+            />
+            <Button
+              text="حفظ التحليل بشكل عام للبند"
+              onClick={() => handleSubmit(false)}
+              loading={loading}
+            />
+          </div>
+          <p className="max-w-xl text-right text-xs leading-6 text-gray-500">
+            <span className="font-semibold">للبند الحالي فقط:</span> يُحفظ لهذا
+            البند في هذه المقايسة فقط دون التأثير على أي بنود أخرى.{" "}
+            <span className="font-semibold">بشكل عام:</span> يُحفظ كتحليل عام
+            للبند ويُطبق تلقائيًا على البنود الشبيهة له.
+          </p>
+        </div>
+      ) : (
+        <div className="flex justify-end mt-6">
+          <Button
+            text={isEditMode ? "تعديل تحليل البند" : "تحليل البند"}
+            onClick={() => handleSubmit()}
+            loading={loading}
+          />
+        </div>
+      )}
     </div>
   );
 }
