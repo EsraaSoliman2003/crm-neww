@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
     "desktop:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:3000 && cross-env ELECTRON_DEV_SERVER_URL=http://localhost:3000 electron electron/main.js\"",
     "desktop:start": "cross-env NODE_ENV=production electron electron/main.js",
     "desktop:pack": "npm run build && electron-builder --dir",

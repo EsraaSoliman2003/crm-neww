@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
+  // CI builds a self-contained server (.next/standalone) and ships it to the VPS,
+  // so the box never installs dependencies or builds.
+  output: "standalone",
 images: {
   remotePatterns: [
     {
