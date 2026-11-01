@@ -78,6 +78,31 @@ const buildSection = (
   </table>
 `;
 
+// Styles for the printed / PDF estimate report only (the on-screen table is
+// untouched). An item is one table row, and a row is never split across two
+// pages: if it doesn't fit, it moves whole to the next page, and the column
+// headers repeat at the top of every page.
+const ESTIMATE_PRINT_STYLES = `
+  body { font-family: Arial, sans-serif; padding: 20px; color: #111827; }
+  h2 { margin: 0 0 16px; }
+  h3 { margin: 24px 0 10px; break-after: avoid; page-break-after: avoid; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  /* break-word only breaks a word longer than its column, so column widths
+     stay as before (anywhere would let numbers break digit by digit). */
+  th, td {
+    border: 1px solid #d1d5db; padding: 10px; text-align: right; vertical-align: top;
+    overflow-wrap: break-word;
+  }
+  th { background-color: #f3f4f6; font-weight: 700; }
+  thead { display: table-header-group; }
+  /* On the row only: on cells too it makes Chrome leave empty rows behind. */
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  @media print {
+    body { padding: 0; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+`;
+
 const buildEstimateReportHtml = (
   estimate: Estimate,
   estimateItemsWithMetrics: EstimateItemWithMetrics[],
@@ -404,14 +429,7 @@ export default function EstimateDetailsUI() {
         <head>
           <meta charset="UTF-8" />
           <title>${escapeHtml(reportTitle)}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; color: #111827; }
-            h2 { margin: 0 0 16px; }
-            h3 { margin: 24px 0 10px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-            th, td { border: 1px solid #d1d5db; padding: 10px; text-align: right; }
-            th { background-color: #f3f4f6; font-weight: 700; }
-          </style>
+          <style>${ESTIMATE_PRINT_STYLES}</style>
         </head>
         <body>${reportHtml}</body>
       </html>
