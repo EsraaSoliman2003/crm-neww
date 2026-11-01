@@ -193,10 +193,19 @@ jobs:
           set -eu
           cd "$1"
           name=$(node -p "require('./ecosystem.config.cjs').apps[0].name")
-          running_from=$(pm2 jlist | node -e '
+          # Start the pm2 daemon first: on its very first run pm2 prints a
+          # welcome banner, which would otherwise end up in the jlist output.
+          pm2 ping > /dev/null
+          # jlist prints the process list as one JSON line; skip anything else
+          # pm2 may print around it.
+          running_from=$(pm2 jlist 2>/dev/null | node -e '
             let s = "";
             process.stdin.on("data", (d) => (s += d)).on("end", () => {
-              const app = JSON.parse(s).find((p) => p.name === process.argv[1]);
+              const line = s.split("\n").map((l) => l.trim()).reverse()
+                .find((l) => l.startsWith("[") && l.endsWith("]"));
+              let list = [];
+              try { list = JSON.parse(line || "[]"); } catch { list = []; }
+              const app = list.find((p) => p.name === process.argv[1]);
               process.stdout.write(app ? app.pm2_env.pm_cwd : "");
             });' "$name")
           if [ -n "$running_from" ] && [ "$running_from" != "$PWD" ]; then
