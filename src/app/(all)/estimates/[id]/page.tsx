@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import Input from "@/components/form/Input";
 import Dropdown from "@/components/dropdown/DropDown";
 import { confirmDelete } from "@/utils/confirmDelete";
-import { Download, FileText, Trash2 } from "lucide-react";
+import { Download, FileText, Layers, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import type { AnalyzeItemDetails } from "@/rtk/slices/itemSlice";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/utils/estimateItemQuantities";
 import { formatProjectCost } from "@/lib/formatProjectCost";
 import EditEstimateQuantityModal from "../_components/EditEstimateQuantityModal";
+import { buildComponentsReportHtml, buildEstimateComponents } from "./componentsReport";
 
 type Option = {
   value: string;
@@ -118,6 +119,7 @@ const ESTIMATE_PRINT_STYLES = `
     overflow-wrap: break-word;
   }
   th { background-color: #f3f4f6; font-weight: 700; }
+  .total-row td { font-weight: 700; background-color: #fafafa; }
   thead { display: table-header-group; }
   /* On the row only: on cells too it makes Chrome leave empty rows behind. */
   tr { break-inside: avoid; page-break-inside: avoid; }
@@ -194,6 +196,7 @@ export default function EstimateDetailsUI() {
   const [estimateD, setEstimateD] = useState<Estimate>();
   const [loading, setLoading] = useState<boolean>(false);
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [buildingComponents, setBuildingComponents] = useState(false);
   const [itemFilters, setItemFilters] = useState({
     search: "",
     category: "",
@@ -442,6 +445,73 @@ export default function EstimateDetailsUI() {
   const reportHtml = estimateD
     ? buildEstimateReportHtml(estimateD, estimateItemsWithMetrics)
     : "";
+
+  // تحويل المقايسة إلى خامات واختبارات ومصنعيات: بيجمع تحليل كل البنود مضروب في
+  // كمية البند في المقايسة، ويطلع تقرير طباعة جديد بدل عرض البنود
+  const handleComponentsReport = async () => {
+    if (!estimateD || buildingComponents) return;
+
+    // The window opens before the requests, otherwise the browser blocks it as a popup.
+    const reportWindow = window.open("", "_blank");
+    if (!reportWindow) {
+      toast.error("اسمح بفتح النوافذ المنبثقة لعرض التقرير");
+      return;
+    }
+    reportWindow.document.write(
+      `<p dir="rtl" style="font-family: Arial, sans-serif; padding: 24px">جاري تجهيز التقرير...</p>`,
+    );
+
+    setBuildingComponents(true);
+    try {
+      let failedLoads = 0;
+      const inputs = await Promise.all(
+        estimateItemsWithMetrics.map(async (item) => {
+          let analysis: AnalyzeItemDetails | null = null;
+          try {
+            const { data } = await axios.get<AnalyzeItemDetails>(`/Item/analyze/${item.id}`, { silent: true });
+            analysis = data;
+          } catch (error) {
+            failedLoads++;
+            console.error(`Failed to load analysis for item ${item.id}`, error);
+          }
+          return {
+            itemId: item.id,
+            itemName: item.name,
+            estimateQuantity: item.estimateQuantity,
+            analysis,
+          };
+        }),
+      );
+
+      const components = buildEstimateComponents(inputs);
+      const body = buildComponentsReportHtml(estimateD, components, estimateItemsWithMetrics.length);
+      const title = `تحويل المقايسة إلى خامات واختبارات ومصنعيات - ${estimateD.name ?? ""}`;
+
+      reportWindow.document.open();
+      reportWindow.document.write(`
+        <html dir="rtl">
+          <head>
+            <meta charset="UTF-8" />
+            <title>${escapeHtml(title)}</title>
+            <style>${ESTIMATE_PRINT_STYLES}</style>
+          </head>
+          <body>${body}</body>
+        </html>
+      `);
+      reportWindow.document.close();
+      reportWindow.focus();
+
+      if (failedLoads > 0) {
+        toast.warning(`تعذر تحميل تحليل ${failedLoads} بند، ولم يتم احتسابها في التقرير`);
+      }
+    } catch (error) {
+      console.error("Failed to build the components report", error);
+      reportWindow.close();
+      toast.error("تعذر تجهيز التقرير، حاول مرة أخرى");
+    } finally {
+      setBuildingComponents(false);
+    }
+  };
 
   const handleExportPdf = () => {
     if (!estimateD) return;
@@ -853,6 +923,18 @@ export default function EstimateDetailsUI() {
             >
               <Download size={16} />
               {exportingExcel ? "جاري تجهيز Excel..." : "Excel"}
+            </button>
+            <button
+              type="button"
+              onClick={handleComponentsReport}
+              disabled={buildingComponents || !hasItems}
+              title={hasItems ? undefined : "لا توجد بنود في المقايسة"}
+              className="flex h-12 items-center gap-2 border border-orange-500 bg-white px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Layers size={16} />
+              {buildingComponents
+                ? "جاري تجهيز التقرير..."
+                : "تحويل المقايسة إلى خامات واختبارات ومصنعيات"}
             </button>
             <Button
               text="تعديل المقايسة"

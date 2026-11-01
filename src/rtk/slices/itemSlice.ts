@@ -64,6 +64,7 @@ export interface AnalyzeItemDetails {
       id: number;
       name: string;
       performanceRate: number;
+      unit?: { id: number; value: string } | null;
       totalDailyPrice: number;
       notes: string;
       dailies: {
@@ -104,6 +105,10 @@ export interface AnalyzeItemDetails {
       waste?: number;
       supplierId?: number;
       supplierName?: string;
+      // Material waste (0.05 = 5%) and unit name, returned by the API since
+      // the estimate components report needs them.
+      materialWaste?: number | null;
+      materialUnitValue?: string | null;
       price: number;
       note?: string | null;
     };
