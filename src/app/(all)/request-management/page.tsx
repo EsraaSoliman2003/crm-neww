@@ -82,7 +82,7 @@ export default function RequestsPage() {
             {
               key: "role",
               header: "الدور",
-              render: (row) => row.role === "COMPANY" ? "الشركة (مدير)" : row.role === "EMPLOYEE" ? "الشركة (مهندس)" : "مورد",
+              render: (row) => row.role === "COMPANY" ? "شركة او مؤسسة" : row.role === "EMPLOYEE" ? "الشركة (مهندس)" : "مورد",
               filterable: true,
             },
 

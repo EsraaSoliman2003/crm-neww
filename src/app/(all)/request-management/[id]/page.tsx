@@ -92,7 +92,7 @@ export default function UserProfileAdmin() {
                 label="الوظيفة"
                 value={
                   selectedUser.role === "COMPANY"
-                    ? "الشركة (مدير)"
+                    ? "شركة او مؤسسة"
                     : selectedUser.role === "EMPLOYEE"
                       ? "الشركة (مهندس)"
                       : "مورد"
