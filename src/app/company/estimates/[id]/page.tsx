@@ -92,7 +92,8 @@ export default function CompanyEstimateDetailsPage() {
   const difference = details ? details.companyTotal - details.systemTotal : 0;
 
   return (
-    <div className="min-h-screen space-y-6 p-6 md:p-8">
+    // no min-h-screen / bottom padding: the table fills the rest of the screen and scrolls itself
+    <div className="space-y-6 px-6 pt-6 md:px-8 md:pt-8">
       {/* Header */}
       <div className="sticky top-[68px] z-30 -mx-6 bg-[#f7f7f7] px-6 pb-4 pt-1 md:-mx-8 md:top-[84px] md:px-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -160,17 +161,32 @@ export default function CompanyEstimateDetailsPage() {
             <Table
               data={details.items}
               getRowKeyAction={(row) => `${row.itemId}`}
-              tableClassName="min-w-290"
+              // scrolls inside its own area (sticky header + totals row) instead of the whole page
+              fillViewport
+              fitToScreen
+              tableClassName="min-w-[1050px]"
               emptyText="لا توجد بنود"
               columns={[
-                { key: "index", header: "#", render: (_row, index) => index + 1 },
-                { key: "itemName", header: "البند" },
+                { key: "index", header: "#", width: "40px", render: (_row, index) => index + 1 },
+                {
+                  key: "itemName",
+                  header: "البند",
+                  width: "220px",
+                  // long item names wrap instead of widening the table
+                  render: (row) => (
+                    <div className="w-[220px] whitespace-normal wrap-break-word leading-6">{row.itemName}</div>
+                  ),
+                },
                 {
                   key: "categoryName",
                   header: "التصنيف",
+                  width: "150px",
                   filterable: true,
-                  render: (row) =>
-                    [row.categoryName, row.subCategoryName].filter(Boolean).join(" / ") || "-",
+                  render: (row) => (
+                    <div className="w-[150px] whitespace-normal wrap-break-word text-xs leading-5">
+                      {[row.categoryName, row.subCategoryName].filter(Boolean).join(" / ") || "-"}
+                    </div>
+                  ),
                 },
                 { key: "unitName", header: "الوحدة", render: (row) => row.unitName || "-" },
                 {
