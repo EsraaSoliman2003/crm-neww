@@ -240,10 +240,12 @@ export default function AddMatreial({
       newErrors.unit = "الوحدة مطلوبة";
     }
 
+    // supplier has no waste input; the admin sets it later
     if (
-      form.waste === null ||
-      form.waste === undefined ||
-      Number(form.waste) <= 0
+      !supplierMode &&
+      (form.waste === null ||
+        form.waste === undefined ||
+        Number(form.waste) <= 0)
     ) {
       newErrors.waste = "الهالك مطلوب ويجب أن يكون أكبر من 0";
     }
@@ -284,7 +286,7 @@ export default function AddMatreial({
       const payload = {
         name: form.name,
         unitId: Number(form.unit),
-        waste: Number(form.waste) / 100,
+        waste: supplierMode ? 0 : Number(form.waste) / 100,
         entityCategoryMappingId,
         price: Number(form.price),
         notes: form.note,
@@ -507,7 +509,7 @@ export default function AddMatreial({
         <div
           className={`grid gap-4 ${
             supplierMode
-              ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
+              ? "grid-cols-1 md:grid-cols-3"
               : "grid-cols-1 md:grid-cols-3"
           }`}
         >
@@ -569,20 +571,22 @@ export default function AddMatreial({
             )}
           </div>
 
-          <div className="flex-1">
-            <Input
-              label="الهالك (%)"
-              type="number"
-              name="waste"
-              value={form.waste}
-              placeholder="ادخل كمية الهالك"
-              onChange={handleChange}
-            />
+          {!supplierMode && (
+            <div className="flex-1">
+              <Input
+                label="الهالك (%)"
+                type="number"
+                name="waste"
+                value={form.waste}
+                placeholder="ادخل كمية الهالك"
+                onChange={handleChange}
+              />
 
-            {errors.waste && (
-              <p className="text-red-500 text-sm">{errors.waste}</p>
-            )}
-          </div>
+              {errors.waste && (
+                <p className="text-red-500 text-sm">{errors.waste}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Source / Brand */}

@@ -7,10 +7,15 @@ import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG } from "@/assets";
 import {
   fetchGlobalSupplierMaterials,
+  fetchSupplierMaterialsBySupplier,
   SupplierMaterialBySupplier,
 } from "@/rtk/slices/supplierMaterialSlice";
 import { useAuth } from "@/context/AuthContext";
 import EditPriceModal from "./_components/EditPriceModal";
+import {
+  openPriceInvoiceWindow,
+  printPriceInvoice,
+} from "./_components/printPriceInvoice";
 import Table from "@/components/table/Table";
 
 export default function Page() {
@@ -26,6 +31,30 @@ export default function Page() {
   }, [dispatch, user]);
 
   const [open, setOpen] = useState(false);
+  const [printing, setPrinting] = useState(false);
+
+  // invoice = the supplier's own current prices (approved and pending)
+  const handlePrintInvoice = async () => {
+    if (!user?.id) return;
+    const printWindow = openPriceInvoiceWindow();
+    if (!printWindow) return;
+    try {
+      setPrinting(true);
+      const rows = await dispatch(
+        fetchSupplierMaterialsBySupplier(Number(user.id)),
+      ).unwrap();
+      printPriceInvoice(
+        printWindow,
+        rows[0]?.supplierName || user.fullName,
+        rows,
+      );
+    } catch (error) {
+      console.log(error);
+      printWindow.close();
+    } finally {
+      setPrinting(false);
+    }
+  };
   const [selectedItem, setSelectedItem] =
     useState<SupplierMaterialBySupplier>();
 
@@ -48,7 +77,11 @@ export default function Page() {
         </div>
 
         <div className="flex gap-3">
-          <Button text="رفع سعر للكل" onClick={() => setOpen(true)} />
+          <Button
+            text="طباعة الفاتورة"
+            onClick={handlePrintInvoice}
+            loading={printing}
+          />
         </div>
       </div>
 

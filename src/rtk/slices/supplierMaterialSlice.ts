@@ -25,6 +25,18 @@ export type SupplierMaterialBySupplier = {
   price: number;
   categoryName: string;
   subCategoryName: string;
+  // returned by SupplierMaterial/supplier/{id}/materials (price invoice + category edit)
+  id?: number;
+  supplierName?: string | null;
+  isAdminPrice?: boolean;
+  isApproved?: boolean | null;
+  validUntil?: string | null;
+  materialUnitValue?: string | null;
+  materialBrand?: string | null;
+  entityCategoryMappingId?: number | null;
+  categoryId?: number | null;
+  subCategoryId?: number | null;
+  canEditCategory?: boolean;
 };
 
 interface MaterialsState {

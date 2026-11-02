@@ -11,6 +11,11 @@ import { Controller } from "react-hook-form";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
 import { logo } from "@/assets";
 import SuccessMessage from "./SuccessMessage";
+import FieldRequirements, {
+  emailRules,
+  nameRules,
+  passwordRules,
+} from "@/components/form/FieldRequirements";
 
 export default function RegisterPage() {
   const {
@@ -74,6 +79,7 @@ export default function RegisterPage() {
                   {...register("fullName")}
                   className="mt-1 w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
+                <FieldRequirements rules={nameRules} value={watch("fullName")} />
                 {errors.fullName && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.fullName.message}
@@ -92,6 +98,7 @@ export default function RegisterPage() {
                   {...register("email")}
                   className="mt-1 w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
+                <FieldRequirements rules={emailRules} value={watch("email")} />
                 {errors.email && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.email.message}
@@ -256,6 +263,7 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </div>
                 </div>
+                <FieldRequirements rules={passwordRules} value={watch("password")} />
                 {errors.password && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.password.message}

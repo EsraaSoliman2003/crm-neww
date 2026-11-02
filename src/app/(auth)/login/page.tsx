@@ -5,6 +5,10 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useLoginForm } from "@/hooks/useLoginForm"; // 👈 مهم
+import FieldRequirements, {
+  emailRules,
+  passwordRules,
+} from "@/components/form/FieldRequirements";
 
 export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +19,7 @@ export default function Page() {
     onSubmit,
     formState: { errors },
     loading,
+    watch,
   } = useLoginForm();
 
   return (
@@ -52,6 +57,7 @@ export default function Page() {
               className="mt-1 w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
               // value={"admin@gmail.com"}
             />
+            <FieldRequirements rules={emailRules} value={watch("email")} />
             {errors.email && (
               <p className="text-red-500 text-xs mt-1">
                 {errors.email.message}
@@ -79,6 +85,7 @@ export default function Page() {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </div>
             </div>
+            <FieldRequirements rules={passwordRules} value={watch("password")} />
 
             {errors.password && (
               <p className="text-red-500 text-xs mt-1">

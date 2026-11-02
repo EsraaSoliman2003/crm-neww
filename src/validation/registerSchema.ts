@@ -6,9 +6,14 @@ export const getRegisterSchema = (t: (key: string) => string) => {
 
   return z
     .object({
+      // same rule as the API: Arabic or English letters and spaces only
       fullName: z
         .string()
-        .min(5, { message: "الاسم يجب أن يكون 3 أحرف على الأقل" }),
+        .trim()
+        .min(3, { message: "الاسم يجب أن يكون 3 أحرف على الأقل" })
+        .regex(/^[A-Za-z؀-ۿ\s]+$/, {
+          message: "الاسم يجب أن يحتوي على حروف عربية أو إنجليزية فقط",
+        }),
 
       email: z.string().email({ message: "من فضلك أدخل بريد إلكتروني صحيح" }),
 
@@ -27,6 +32,9 @@ export const getRegisterSchema = (t: (key: string) => string) => {
         })
         .regex(/[A-Z]/, {
           message: "كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل",
+        })
+        .regex(/\d/, {
+          message: "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل",
         })
         .regex(/[^a-zA-Z0-9]/, {
           message: "كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل",

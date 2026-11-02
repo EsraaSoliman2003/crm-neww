@@ -18,6 +18,7 @@ import { ProfileData } from "@/lib/dtos";
 import axios from "@/lib/axios";
 import Loading from "@/skilton/Loading";
 import EditProfileModal from "./_components/EditProfileModal";
+import EditCategoryModal from "./_components/EditCategoryModal";
 import Table from "@/components/table/Table";
 import Image from "next/image";
 
@@ -53,6 +54,8 @@ export default function Page() {
   const [openEdit, setOpenEdit] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedItem, setSelectedItem] =
+    useState<SupplierMaterialBySupplier>();
+  const [categoryItem, setCategoryItem] =
     useState<SupplierMaterialBySupplier>();
   if (loading) {
     return (
@@ -220,6 +223,15 @@ export default function Page() {
                       >
                         تعديل السعر
                       </button>
+                      {/* only for materials this supplier added (no other supplier/admin prices) */}
+                      {row.canEditCategory && (
+                        <button
+                          onClick={() => setCategoryItem(row)}
+                          className="border border-green-600 px-4 py-2 font-medium text-green-600 transition hover:bg-green-50"
+                        >
+                          تعديل التصنيف
+                        </button>
+                      )}
                     </div>
                   ),
                 },
@@ -238,6 +250,17 @@ export default function Page() {
               setOpen(false);
             }}
             item={selectedItem}
+          />
+        )}
+
+        {categoryItem && (
+          <EditCategoryModal
+            item={categoryItem}
+            onCloseAction={() => setCategoryItem(undefined)}
+            onSavedAction={() =>
+              user?.id &&
+              dispatch(fetchSupplierMaterialsBySupplier(Number(user.id)))
+            }
           />
         )}
       </div>
