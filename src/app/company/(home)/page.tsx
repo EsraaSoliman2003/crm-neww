@@ -4,15 +4,12 @@ import { useEffect, useState } from "react";
 import { Building2, FileText, Mail, Phone, SquarePen } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { useAuth } from "@/context/AuthContext";
-import {
-  CompanyEstimate,
-  fetchCompanyEstimates,
-} from "@/rtk/slices/companiesSlice";
-import Button from "@/components/button/Button";
+import { fetchCompanyEstimates } from "@/rtk/slices/companiesSlice";
+import Link from "next/link";
 import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG, default_image } from "@/assets";
-import EditPriceModal from "../estimates/_components/EditPriceModal";
+import { formatMoney } from "@/lib/companyPricing";
 import { ProfileData } from "@/lib/dtos";
 import axios from "@/lib/axios";
 import Loading from "@/skilton/Loading";
@@ -47,8 +44,6 @@ export default function Page() {
   }, [dispatch, user, setProfileData]);
 
   const [openEdit, setOpenEdit] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<CompanyEstimate>();
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -144,12 +139,6 @@ export default function Page() {
             <div className="text-right">
               <h1 className="text-xl md:text-2xl font-bold">مقايساتى</h1>
             </div>
-
-            {(estimates || []).length > 0 && (
-              <div className="flex gap-3">
-                <Button text="رفع سعر للكل" onClick={() => setOpen(true)} />
-              </div>
-            )}
           </div>
 
           {estimatesLoading ? (
@@ -179,7 +168,8 @@ export default function Page() {
                 },
                 {
                   key: "price",
-                  header: "السعر",
+                  header: "الإجمالي بعد الرفع",
+                  render: (row) => formatMoney(row.price),
                 },
                 {
                   key: "actions",
@@ -187,15 +177,12 @@ export default function Page() {
                   className: "text-center",
                   render: (row) => (
                     <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => {
-                          setSelectedItem(row);
-                          setOpen(true);
-                        }}
+                      <Link
+                        href={`/company/estimates/${row.estimateId}`}
                         className="border border-blue-600 px-4 py-2 font-medium text-blue-600 transition hover:bg-blue-50"
                       >
-                        تعديل السعر
-                      </button>
+                        تفاصيل المقايسة
+                      </Link>
                     </div>
                   ),
                 },
@@ -205,17 +192,6 @@ export default function Page() {
             <EmptyState image={card2BG} title="لا يوجد لديك بيانات" />
           )}
         </div>
-
-        {open && (
-          <EditPriceModal
-            open={open}
-            onCloseAction={() => {
-              setSelectedItem(undefined);
-              setOpen(false);
-            }}
-            item={selectedItem}
-          />
-        )}
       </div>
     </>
   );

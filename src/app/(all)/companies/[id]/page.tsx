@@ -20,6 +20,7 @@ import Table from "@/components/table/Table";
 import Image from "next/image";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import RaisedItemsSection from "./RaisedItemsSection";
 
 const escapeHtml = (value: string | number | null | undefined) =>
   String(value ?? "-")
@@ -549,6 +550,9 @@ export default function Page() {
           />
         )}
       </div>
+
+      {/* ================= RAISED ITEM PRICES ================= */}
+      <RaisedItemsSection companyId={Number(id)} />
 
       {/* ================= GLOBAL ESTIMATES ================= */}
       <div className="px-6 pb-10 md:px-8">
