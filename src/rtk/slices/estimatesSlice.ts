@@ -55,6 +55,8 @@ export const fetchEstimateById = createAsyncThunk(
 export type AssignEstimateRequest = {
   estimateId: number;
   itemIds: number[];
+  // Quantity of each item in the estimate (saved in the database); missing = 1.
+  quantities?: { itemId: number; quantity: number }[];
 };
 
 export const assignEstimate = createAsyncThunk(
@@ -78,6 +80,8 @@ export type CreateEstimateRequest = {
   adminOfferPrice: number | null;
   notes: string;
   itemIds: number[];
+  // Quantity of each item in the estimate (saved in the database); missing = 1.
+  quantities?: { itemId: number; quantity: number }[];
   estimateCompleteId: number;
   estimateStageId: number;
 };
@@ -95,7 +99,7 @@ export const createEstimate = createAsyncThunk(
 =========================== */
 export type UpdateEstimateRequest = Omit<
   CreateEstimateRequest,
-  "quantity" | "itemIds"
+  "quantity" | "itemIds" | "quantities"
 > & {
   id: number;
 };

@@ -83,6 +83,8 @@ export interface Estimate {
   updatedAt: string;
 
   items: EstimateItem[];
+  // Quantity of each item in this estimate, stored in the database.
+  itemQuantities?: { itemId: number; quantity: number }[];
 }
 
 export interface EstimateItem {

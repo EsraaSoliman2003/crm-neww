@@ -20,8 +20,9 @@ import axios from "@/lib/axios";
 import Modal from "@/components/modal/Modal";
 import FormModal from "@/components/formModal/FormModal";
 import {
-  getEstimateItemQuantityMap,
-  saveEstimateItemQuantities,
+  clearLegacyQuantities,
+  quantitiesFromEstimate,
+  withLegacyQuantities,
 } from "@/utils/estimateItemQuantities";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -67,6 +68,7 @@ type EditableEstimate = {
   estimateComplete?: EstimateComplete;
   estimateStage?: EstimateComplete;
   items?: { id: number }[];
+  itemQuantities?: { itemId: number; quantity: number }[];
 };
 
 type NewErrors = {
@@ -299,7 +301,14 @@ export default function EstimateForm() {
     const estimate = selectedEstimate as EditableEstimate;
 
     queueMicrotask(() => {
-      const storedQuantityMap = getEstimateItemQuantityMap(estimateId);
+      // Quantities from the database; a quantity only this browser still has
+      // (from before they moved to the database) is used if the server has the
+      // default, and gets saved with the form.
+      const storedQuantityMap = new Map(
+        withLegacyQuantities(estimateId, quantitiesFromEstimate(estimate)).map(
+          (entry) => [entry.itemId, entry.quantity],
+        ),
+      );
 
       setForm({
         estimateNumber: estimate.estimateNumber || "",
@@ -415,15 +424,17 @@ export default function EstimateForm() {
           }),
         ).unwrap();
 
+        // Items and their quantities are saved together in the database.
         await axios.post(`Estimate/Assign?isUpdate=${true}`, {
           estimateId,
           itemIds,
+          quantities: quantityPayload,
         });
-        saveEstimateItemQuantities(estimateId, quantityPayload);
+        clearLegacyQuantities(estimateId);
 
         toast.success("تم تحديث المقايسة بنجاح");
       } else {
-        const createdEstimate = await dispatch(
+        await dispatch(
           createEstimate({
             estimateNumber: form.estimateNumber.trim(),
             estimateStageId: form.estimateStageId,
@@ -436,11 +447,9 @@ export default function EstimateForm() {
             adminOfferPrice: form.companyProposal,
             notes: form.notes,
             itemIds,
+            quantities: quantityPayload,
           }),
         ).unwrap();
-        if (createdEstimate?.id) {
-          saveEstimateItemQuantities(createdEstimate.id, quantityPayload);
-        }
 
         toast.success("تمت إضافة المقايسة بنجاح");
       }

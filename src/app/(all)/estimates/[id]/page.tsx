@@ -19,8 +19,11 @@ import { Download, FileText, Layers, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import type { AnalyzeItemDetails } from "@/rtk/slices/itemSlice";
 import {
+  clearLegacyQuantities,
+  hasQuantityChanges,
+  quantitiesFromEstimate,
   saveEstimateItemQuantities,
-  syncEstimateItemQuantities,
+  withLegacyQuantities,
   type EstimateItemQuantityEntry,
 } from "@/utils/estimateItemQuantities";
 import { formatProjectCost } from "@/lib/formatProjectCost";
@@ -215,12 +218,25 @@ export default function EstimateDetailsUI() {
     try {
       setLoading(true);
       const { data } = await axios.get<Estimate>(`/Estimate/${id}`);
-      const syncedItemQuantities = syncEstimateItemQuantities(
-        data.id,
-        (data.items || []).map((item) => item.id),
-      );
-      setItemQuantities(syncedItemQuantities);
+      const serverQuantities = quantitiesFromEstimate(data);
+      // Quantities this browser had saved before they moved to the database
+      // are uploaded once, then forgotten locally.
+      const quantities = withLegacyQuantities(data.id, serverQuantities);
+      setItemQuantities(quantities);
       setEstimateD(data);
+
+      if (hasQuantityChanges(quantities, serverQuantities)) {
+        saveEstimateItemQuantities(data.id, quantities)
+          .then(async () => {
+            clearLegacyQuantities(data.id);
+            // Refresh the totals the API computes from the quantities.
+            const { data: refreshed } = await axios.get<Estimate>(`/Estimate/${id}`);
+            setEstimateD(refreshed);
+          })
+          .catch((error) => console.error("Failed to upload local item quantities", error));
+      } else {
+        clearLegacyQuantities(data.id);
+      }
     } catch (err) {
       console.log(err);
     } finally {
@@ -270,6 +286,7 @@ export default function EstimateDetailsUI() {
   const addItemsToEstimate = async (payload: {
     estimateId: number;
     itemIds: number[];
+    quantities?: EstimateItemQuantityEntry[];
   }) => {
     const { data } = await axios.post(
       `Estimate/Assign?isUpdate=${true}`,
@@ -281,22 +298,19 @@ export default function EstimateDetailsUI() {
   const handleAdd = async () => {
     setAddingItems(true);
     try {
-      await addItemsToEstimate({
-        estimateId: Number(id),
-        itemIds: selected,
-      });
-
       const currentQuantityMap = new Map(
         itemQuantities.map((item) => [item.itemId, item.quantity]),
       );
-      saveEstimateItemQuantities(
-        Number(id),
-        selected.map((itemId) => ({
+      // Items and their quantities are saved together in the database.
+      await addItemsToEstimate({
+        estimateId: Number(id),
+        itemIds: selected,
+        quantities: selected.map((itemId) => ({
           itemId,
           quantity:
             selectedQuantities[itemId] ?? currentQuantityMap.get(itemId) ?? 1,
         })),
-      );
+      });
 
       toast.success("تم إضافة البنود بنجاح");
       fetchEstimate(String(id));
@@ -1352,6 +1366,13 @@ export default function EstimateDetailsUI() {
               },
             ];
           });
+
+          // The API's item totals (used by the PDF/Excel summary) depend on the
+          // quantities, so refresh them without the full-page loader.
+          axios
+            .get<Estimate>(`/Estimate/${id}`, { silent: true })
+            .then(({ data }) => setEstimateD(data))
+            .catch(() => {});
         }}
         onClose={() => {
           setQuantityModalOpen(false);

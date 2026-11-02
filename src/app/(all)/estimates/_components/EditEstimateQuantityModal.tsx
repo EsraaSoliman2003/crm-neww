@@ -36,7 +36,7 @@ export default function EditEstimateQuantityModal({
 
     if (!isOpen) return null;
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const parsedQuantity = Number(value);
 
         if (
@@ -56,7 +56,8 @@ export default function EditEstimateQuantityModal({
         try {
             setSaving(true);
 
-            saveEstimateItemQuantities(estimate.id, [
+            // Saved in the database; only this item's quantity changes.
+            await saveEstimateItemQuantities(estimate.id, [
                 {
                     itemId,
                     quantity: parsedQuantity,
@@ -68,8 +69,8 @@ export default function EditEstimateQuantityModal({
             toast.success("تم تعديل الكمية بنجاح");
             onClose();
         } catch (error) {
+            // The API error is already shown by the axios interceptor.
             console.error(error);
-            toast.error("تعذر تعديل الكمية");
         } finally {
             setSaving(false);
         }
