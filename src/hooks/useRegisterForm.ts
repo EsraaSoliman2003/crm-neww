@@ -97,7 +97,24 @@ export const useRegisterForm = (
         return;
       }
 
-      if (resultAction.type.endsWith("rejected")) {
+      if (registerUser.rejected.match(resultAction)) {
+        // Server-side errors (name or email already used, password rules...)
+        // go under their field; the toast already shows the title.
+        const fieldOf: Record<string, keyof RegisterSchemaType> = {
+          fullname: "fullName",
+          email: "email",
+          password: "password",
+          phonenumber: "phone",
+          images: "images",
+        };
+        Object.entries(resultAction.payload?.errors ?? {}).forEach(
+          ([key, messages]) => {
+            const field = fieldOf[key.toLowerCase()];
+            if (field && messages?.length) {
+              form.setError(field, { type: "server", message: messages.join("، ") }, { shouldFocus: true });
+            }
+          },
+        );
         return;
       }
 

@@ -35,10 +35,11 @@ const initialState: AuthState = {
 
 export const registerUser = createAsyncThunk<
   AuthResponse,
-  FormData
+  FormData,
+  { rejectValue: ApiErrorBody }
 >(
   "auth/register",
-  async (formData) => {
+  async (formData, { rejectWithValue }) => {
 
     const role = formData.get("Role");
 
@@ -47,13 +48,18 @@ export const registerUser = createAsyncThunk<
         ? "Account/register"
         : "Account/register-role";
 
-    const res = await instance.post(endpoint, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    try {
+      const res = await instance.post(endpoint, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    return res.data;
+      return res.data;
+    } catch (error: unknown) {
+      // the error body carries per-field messages (FullName / Email / Password)
+      return rejectWithValue(toApiError(error));
+    }
   }
 );
 
