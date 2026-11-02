@@ -18,8 +18,9 @@ import {
 } from "./_components/printPriceInvoice";
 import Table from "@/components/table/Table";
 
-// every material in the system, with the lowest approved price and this supplier's own price
+// every material in the system, with the system (admin) price and this supplier's own price
 type SystemMaterial = {
+  systemPrice: number | null;
   materialId: number;
   materialName: string;
   materialImage: string | null;
@@ -27,7 +28,6 @@ type SystemMaterial = {
   categoryName: string | null;
   subCategoryName: string | null;
   unitName: string | null;
-  lowestPrice: number | null;
   myPrice: number | null;
   myPriceIsApproved: boolean | null;
   myPriceValidUntil: string | null;
@@ -167,15 +167,17 @@ export default function Page() {
             },
 
             {
-              key: "lowestPrice",
-              header: "أقل سعر بالمنظومة",
+              key: "systemPrice",
+              header: "سعر النظام",
               className: "text-center font-medium text-gray-800",
-              render: (row) => formatPrice(row.lowestPrice),
+              // the original price set by the admin, never another supplier's price
+              render: (row) => formatPrice(row.systemPrice),
             },
 
             {
               key: "myPrice",
-              header: "سعري",
+              // only the logged-in supplier's own price (the API reads it from the token)
+              header: "سعر المورد الحالي",
               className: "text-center",
               render: (row) =>
                 row.myPrice == null ? (
