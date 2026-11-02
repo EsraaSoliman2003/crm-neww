@@ -49,6 +49,11 @@ export interface Company {
   password: string;
   countryCode: string;
   phoneNumber: string;
+  isSystem?: boolean;
+  /** true = registered from the register page and approved by the admin; false = added by the admin. */
+  isSelfRegistered?: boolean;
+  createdAt?: string;
+  approvedAt?: string | null;
 }
 
 export interface Estimate {

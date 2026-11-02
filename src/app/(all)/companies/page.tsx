@@ -7,6 +7,8 @@ import {
   Mail,
   MessageCircle,
   Phone,
+  ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 import Button from "@/components/button/Button";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
@@ -22,6 +24,12 @@ import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG } from "@/assets";
 
+const SELF_REGISTERED = "تسجيل ذاتي";
+const ADDED_BY_ADMIN = "أضافها الأدمن";
+
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" });
+
 export default function CompaniesPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -36,12 +44,18 @@ export default function CompaniesPage() {
     confirmDelete(id, (id) => dispatch(deleteCompany(Number(id))).unwrap());
   };
   const normalizedSearch = search.trim().toLowerCase();
-  const filteredData = (data || []).filter((company) =>
-    [company.companyName, company.email, company.phoneNumber]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(normalizedSearch)),
-  );
-  const flattenItems = (data: Company[]) => {
+  // registrationSource is a plain text copy so the column can be filtered and exported
+  const filteredData = (data || [])
+    .map((company) => ({
+      ...company,
+      registrationSource: company.isSelfRegistered ? SELF_REGISTERED : ADDED_BY_ADMIN,
+    }))
+    .filter((company) =>
+      [company.companyName, company.email, company.phoneNumber]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearch)),
+    );
+  const flattenItems = (data: (Company & { registrationSource: string })[]) => {
     return data.map((item) => ({
       id: item.id,
       companyName: item.companyName,
@@ -49,6 +63,7 @@ export default function CompaniesPage() {
       password: item.password,
       countryCode: item.countryCode,
       phoneNumber: item.phoneNumber,
+      registrationSource: item.registrationSource,
     }));
   };
   return (
@@ -100,6 +115,37 @@ export default function CompaniesPage() {
               key: "companyName",
               header: "اسم الشركة",
               filterable: true,
+            },
+
+            {
+              key: "registrationSource",
+              header: "مصدر التسجيل",
+              filterable: true,
+              render: (row) =>
+                row.isSelfRegistered ? (
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 ring-1 ring-green-200">
+                      <UserCheck size={13} />
+                      {SELF_REGISTERED}
+                    </span>
+                    <span className="text-[11px] text-gray-500">
+                      تم القبول والاعتماد من الأدمن
+                      {row.approvedAt ? ` • ${formatDate(row.approvedAt)}` : ""}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-200">
+                      <ShieldCheck size={13} />
+                      {ADDED_BY_ADMIN}
+                    </span>
+                    {row.createdAt && (
+                      <span className="text-[11px] text-gray-500">
+                        {formatDate(row.createdAt)}
+                      </span>
+                    )}
+                  </div>
+                ),
             },
 
             {
