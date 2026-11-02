@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FileText, Mail, Package, Phone, SquarePen } from "lucide-react";
+import { FileText, Mail, Package, Phone, SquarePen, Tags } from "lucide-react";
 import Images from "./_components/Images";
 import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
@@ -140,6 +140,16 @@ export default function Page() {
               <Phone size={18} className="shrink-0 text-green-500" />
               <span className="text-sm font-medium text-gray-700">
                 {profileData?.phone || "-"}
+              </span>
+            </div>
+
+            {/* category (edited from "تعديل البيانات") */}
+            <div className="flex items-center justify-between gap-3 border border-gray-100 bg-gray-50 p-3">
+              <Tags size={18} className="shrink-0 text-[#bf0200]" />
+              <span className="text-right text-sm font-medium text-gray-700">
+                {profileData?.categoryName
+                  ? [profileData.categoryName, profileData.subCategoryName].filter(Boolean).join(" / ")
+                  : "لم يتم تحديد التصنيف"}
               </span>
             </div>
           </div>

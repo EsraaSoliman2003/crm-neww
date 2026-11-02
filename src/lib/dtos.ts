@@ -48,6 +48,11 @@ export interface ProfileData {
   imageUrl: string | null;
   aboutMe: string | null;
   coverImage: string | null;
+  // supplier only: general category and sub-category, edited from the profile
+  categoryId?: number | null;
+  categoryName?: string | null;
+  subCategoryId?: number | null;
+  subCategoryName?: string | null;
 }
 
 export interface Estimate {

@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
+import { fetchSubCategories } from "@/rtk/slices/subCategoriesSlice";
+import { MaterialsNumber } from "@/constants/constantsNumbers";
 import axios from "@/lib/axios";
 import Image from "next/image";
 import { X, Camera, Loader2 } from "lucide-react";
@@ -23,6 +26,17 @@ export default function EditProfileModal({ open, onCloseAction }: Props) {
   const [aboutMe, setAboutMe] = useState(profileData?.aboutMe || "");
   const [email, setEmail] = useState(profileData?.email || "");
   const [phone, setPhone] = useState(profileData?.phone || "");
+  const [categoryId, setCategoryId] = useState(String(profileData?.categoryId ?? ""));
+  const [subCategoryId, setSubCategoryId] = useState(String(profileData?.subCategoryId ?? ""));
+
+  // same category tree the supplier uses for its materials
+  const dispatch = useAppDispatch();
+  const { data: categories } = useAppSelector((s) => s.subCategories);
+  useEffect(() => {
+    if (open) dispatch(fetchSubCategories(MaterialsNumber));
+  }, [dispatch, open]);
+  const subCategories =
+    categories.find((c) => String(c.categoryId) === categoryId)?.subCategories ?? [];
 
   if (!open) return null;
 
@@ -101,6 +115,22 @@ export default function EditProfileModal({ open, onCloseAction }: Props) {
       body: { newCountryCode: "+20", newPhone: phone },
       successMessage: "تم تحديث الهاتف",
     });
+
+  const updateCategory = () => {
+    if (!categoryId) {
+      toast.error("اختر التصنيف العام");
+      return;
+    }
+    handleRequest({
+      type: "category",
+      endpoint: "/profile/category",
+      body: {
+        categoryId: Number(categoryId),
+        subCategoryId: subCategoryId ? Number(subCategoryId) : null,
+      },
+      successMessage: "تم تحديث التصنيف",
+    });
+  };
 
   const updateImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -221,6 +251,48 @@ export default function EditProfileModal({ open, onCloseAction }: Props) {
             onSave={updatePhone}
             btn={btn}
           />
+
+          {/* CATEGORY (general + sub) */}
+          <div className="space-y-2">
+            <label className="text-sm text-gray-600 font-bold">التصنيف</label>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <select
+                value={categoryId}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setSubCategoryId("");
+                }}
+                className="h-11 flex-1 border border-gray-200 bg-white px-3 outline-none transition focus:border-[#bf0200] focus:ring-2 focus:ring-[#bf0200]/20"
+              >
+                <option value="">التصنيف العام</option>
+                {categories.map((c) => (
+                  <option key={c.categoryId} value={c.categoryId}>
+                    {c.categoryName}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={subCategoryId}
+                onChange={(e) => setSubCategoryId(e.target.value)}
+                disabled={!categoryId || subCategories.length === 0}
+                className="h-11 flex-1 border border-gray-200 bg-white px-3 outline-none transition focus:border-[#bf0200] focus:ring-2 focus:ring-[#bf0200]/20 disabled:bg-gray-50 disabled:text-gray-400"
+              >
+                <option value="">التصنيف الفرعي (اختياري)</option>
+                {subCategories.map((s) => (
+                  <option key={s.subCategoryId} value={s.subCategoryId}>
+                    {s.subCategoryName}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={updateCategory}
+                disabled={loadingType === "category"}
+                className={btn}
+              >
+                {loadingType === "category" ? <Loader2 className="animate-spin" /> : "حفظ"}
+              </button>
+            </div>
+          </div>
 
           {/* COVER UPLOAD */}
           <label className="h-28 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-[#bf0200] transition">
