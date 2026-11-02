@@ -90,6 +90,8 @@ export default function CompanyEstimateDetailsPage() {
   if (loading && !details) return <Loader />;
 
   const difference = details ? details.companyTotal - details.systemTotal : 0;
+  // nothing raised yet: "after raise" values stay empty instead of repeating the system price
+  const hasRaise = (details?.raisedItemsCount ?? 0) > 0;
 
   return (
     // no min-h-screen / bottom padding: the table fills the rest of the screen and scrolls itself
@@ -131,26 +133,34 @@ export default function CompanyEstimateDetailsPage() {
               <p className="text-sm font-semibold text-[#bf0200]">
                 إجمالي المقايسة بعد الرفع
               </p>
-              <p className="mt-2 text-3xl font-extrabold text-gray-900">
-                {formatMoney(details.companyTotal)}
-              </p>
+              {hasRaise ? (
+                <p className="mt-2 text-3xl font-extrabold text-gray-900">
+                  {formatMoney(details.companyTotal)}
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-gray-400">لم يتم رفع أي سعر بعد</p>
+              )}
             </div>
             <div className="border border-gray-200 bg-white p-5 shadow-sm">
               <p className="text-sm text-gray-500">الفرق</p>
-              <p
-                className={`mt-2 text-2xl font-bold ${
-                  difference > 0
-                    ? "text-green-700"
-                    : difference < 0
-                      ? "text-red-600"
-                      : "text-gray-800"
-                }`}
-              >
-                {formatMoney(difference)}{" "}
-                <span className="text-base font-medium">
-                  ({formatChange(details.systemTotal, details.companyTotal)})
-                </span>
-              </p>
+              {hasRaise ? (
+                <p
+                  className={`mt-2 text-2xl font-bold ${
+                    difference > 0
+                      ? "text-green-700"
+                      : difference < 0
+                        ? "text-red-600"
+                        : "text-gray-800"
+                  }`}
+                >
+                  {formatMoney(difference)}{" "}
+                  <span className="text-base font-medium">
+                    ({formatChange(details.systemTotal, details.companyTotal)})
+                  </span>
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-gray-400">-</p>
+              )}
               <p className="mt-1 text-xs text-gray-500">
                 {details.raisedItemsCount} من {details.itemsCount} بند مرفوع سعره
               </p>
@@ -256,12 +266,13 @@ export default function CompanyEstimateDetailsPage() {
                   key: "finalTotal",
                   header: "الإجمالي بعد الرفع",
                   className: "font-bold text-gray-900",
-                  showTotal: true,
-                  render: (row) => (
-                    <span className={row.companyPrice != null ? "text-[#bf0200]" : undefined}>
-                      {formatMoney(row.finalTotal)}
-                    </span>
-                  ),
+                  // totals row = estimate total after raise, only once something is raised
+                  showTotal: hasRaise,
+                  // empty for items still on the system price
+                  render: (row) =>
+                    row.companyPrice != null ? (
+                      <span className="text-[#bf0200]">{formatMoney(row.finalTotal)}</span>
+                    ) : null,
                 },
               ]}
             />

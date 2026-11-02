@@ -87,7 +87,8 @@ export default function Page() {
               key: "companyTotal",
               header: "الإجمالي بعد الرفع",
               className: "font-bold text-gray-900",
-              render: (row) => formatMoney(row.companyTotal),
+              // empty until at least one item is raised
+              render: (row) => (row.raisedItemsCount > 0 ? formatMoney(row.companyTotal) : null),
             },
             {
               key: "actions",
