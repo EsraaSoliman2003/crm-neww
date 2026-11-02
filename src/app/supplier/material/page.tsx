@@ -1,16 +1,16 @@
 "use client";
 import Button from "@/components/button/Button";
-import React, { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
+import React, { useCallback, useEffect, useState } from "react";
+import { useAppDispatch } from "@/rtk/hooks";
 import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG } from "@/assets";
 import {
-  fetchGlobalSupplierMaterials,
   fetchSupplierMaterialsBySupplier,
   SupplierMaterialBySupplier,
 } from "@/rtk/slices/supplierMaterialSlice";
 import { useAuth } from "@/context/AuthContext";
+import instance from "@/lib/axios";
 import EditPriceModal from "./_components/EditPriceModal";
 import {
   openPriceInvoiceWindow,
@@ -18,17 +18,45 @@ import {
 } from "./_components/printPriceInvoice";
 import Table from "@/components/table/Table";
 
+// every material in the system, with the lowest approved price and this supplier's own price
+type SystemMaterial = {
+  materialId: number;
+  materialName: string;
+  materialImage: string | null;
+  brand: string | null;
+  categoryName: string | null;
+  subCategoryName: string | null;
+  unitName: string | null;
+  lowestPrice: number | null;
+  myPrice: number | null;
+  myPriceIsApproved: boolean | null;
+  myPriceValidUntil: string | null;
+};
+
 export default function Page() {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const { globalSupplierMaterials, loading } = useAppSelector(
-    (s) => s.materialsWithSuppliers,
-  );
-  useEffect(() => {
-    if (user && user.id) {
-      dispatch(fetchGlobalSupplierMaterials(Number(user.id)));
+
+  const [materials, setMaterials] = useState<SystemMaterial[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadMaterials = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await instance.get<SystemMaterial[]>(
+        "SupplierMaterial/system-materials",
+      );
+      setMaterials(res.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
-  }, [dispatch, user]);
+  }, []);
+
+  useEffect(() => {
+    if (user && user.id) void loadMaterials();
+  }, [user, loadMaterials]);
 
   const [open, setOpen] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -58,14 +86,10 @@ export default function Page() {
   const [selectedItem, setSelectedItem] =
     useState<SupplierMaterialBySupplier>();
 
-  const filteredData = Array.from(
-    new Map(
-      globalSupplierMaterials
-        .slice()
-        .reverse()
-        .map((item) => [item.id, item]),
-    ).values(),
-  ).reverse();
+  const formatPrice = (price: number | null) =>
+    price == null
+      ? "-"
+      : `${price.toLocaleString("en-US", { maximumFractionDigits: 2 })} جنيه`;
 
   return (
     <div className="min-h-screen space-y-8 p-6 md:p-8">
@@ -73,7 +97,10 @@ export default function Page() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="text-right">
-          <h1 className="text-xl md:text-2xl font-bold">الخامات المتاحه</h1>
+          <h1 className="text-xl md:text-2xl font-bold">خامات المنظومة</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            ارفع سعرك لأي خامة تريد توريدها
+          </p>
         </div>
 
         <div className="flex gap-3">
@@ -89,10 +116,10 @@ export default function Page() {
 
       {loading ? (
         <Loader />
-      ) : filteredData.length > 0 ? (
+      ) : materials.length > 0 ? (
         <Table
-          data={filteredData || []}
-          getRowKeyAction={(row) => `${row.materialId}-${row.supplierId}`}
+          data={materials}
+          getRowKeyAction={(row) => `${row.materialId}`}
           tableClassName="min-w-290"
           emptyText="لا يوجد بيانات"
           columns={[
@@ -114,6 +141,7 @@ export default function Page() {
               header: "التصنيف العام",
               className: "text-center",
               filterable: true,
+              render: (row) => row.categoryName || "-",
             },
 
             {
@@ -121,21 +149,49 @@ export default function Page() {
               header: "تصنيف الخامة",
               className: "text-center",
               filterable: true,
+              render: (row) => row.subCategoryName || "-",
             },
 
             {
-              key: "supplierName",
-              header: "المورد",
+              key: "unitName",
+              header: "الوحدة",
               className: "text-center",
-              filterable: true,
+              render: (row) => row.unitName || "-",
             },
 
             {
-              key: "price",
-              header: "السعر",
-              className: "text-center font-medium text-gray-800",
+              key: "brand",
+              header: "المصدر / الماركة",
+              className: "text-center",
+              render: (row) => row.brand || "-",
+            },
 
-              render: (row) => `${row.price} جنيه`,
+            {
+              key: "lowestPrice",
+              header: "أقل سعر بالمنظومة",
+              className: "text-center font-medium text-gray-800",
+              render: (row) => formatPrice(row.lowestPrice),
+            },
+
+            {
+              key: "myPrice",
+              header: "سعري",
+              className: "text-center",
+              render: (row) =>
+                row.myPrice == null ? (
+                  <span className="text-gray-400">لم تسعّر بعد</span>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-medium text-gray-800">
+                      {formatPrice(row.myPrice)}
+                    </span>
+                    {row.myPriceIsApproved === false && (
+                      <span className="rounded bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                        في انتظار الموافقة
+                      </span>
+                    )}
+                  </div>
+                ),
             },
 
             {
@@ -147,7 +203,13 @@ export default function Page() {
                 <div className="flex items-center gap-3 justify-center">
                   <button
                     onClick={() => {
-                      setSelectedItem(row);
+                      setSelectedItem({
+                        materialId: row.materialId,
+                        materialName: row.materialName,
+                        price: row.myPrice ?? 0,
+                        categoryName: row.categoryName ?? "",
+                        subCategoryName: row.subCategoryName ?? "",
+                      });
                       setOpen(true);
                     }}
                     className="px-4 py-2
@@ -156,7 +218,7 @@ export default function Page() {
               active:scale-95
               transition-all duration-200"
                   >
-                    رفع سعر
+                    {row.myPrice == null ? "رفع سعر" : "تعديل سعري"}
                   </button>
                 </div>
               ),
@@ -164,7 +226,7 @@ export default function Page() {
           ]}
         />
       ) : (
-        <EmptyState image={card2BG} title="لا يوجد لديك بيانات" />
+        <EmptyState image={card2BG} title="لا توجد خامات في المنظومة" />
       )}
 
       {open && (
@@ -174,6 +236,7 @@ export default function Page() {
             setSelectedItem(undefined);
             setOpen(false);
           }}
+          onSavedAction={loadMaterials}
           item={selectedItem}
         />
       )}

@@ -11,9 +11,10 @@ type Props = {
     open: boolean;
     onCloseAction: () => void;
     item?: SupplierMaterialBySupplier;
+    onSavedAction?: () => void;
 };
 
-export default function EditPriceModal({ open, onCloseAction, item }: Props) {
+export default function EditPriceModal({ open, onCloseAction, item, onSavedAction }: Props) {
     const { user } = useAuth();
     const dispatch = useAppDispatch();
 
@@ -21,7 +22,7 @@ export default function EditPriceModal({ open, onCloseAction, item }: Props) {
         (s) => s.materialsWithSuppliers
     );
 
-    const [price, setPrice] = useState<number | "">("");
+    const [price, setPrice] = useState<number | "">(item?.price || "");
     const [error, setError] = useState("");
 
     /* ===========================
@@ -72,6 +73,7 @@ export default function EditPriceModal({ open, onCloseAction, item }: Props) {
             toast.success("تم تعديل السعر بنجاح");
 
             setError("");
+            onSavedAction?.();
             onCloseAction();
         } catch (error) {
             console.log(error)
@@ -91,7 +93,7 @@ export default function EditPriceModal({ open, onCloseAction, item }: Props) {
             >
                 {/* Title */}
                 <h2 className="text-lg font-bold text-right">
-                    {item ? "رفع سعر" : "رفع سعر للكل"}
+                    {item ? `رفع سعر: ${item.materialName}` : "رفع سعر للكل"}
                 </h2>
 
                 {/* Input */}
