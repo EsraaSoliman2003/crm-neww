@@ -53,6 +53,8 @@ export interface ProfileData {
   categoryName?: string | null;
   subCategoryId?: number | null;
   subCategoryName?: string | null;
+  /** supplier only: source / brand */
+  brand?: string | null;
 }
 
 export interface Estimate {

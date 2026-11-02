@@ -26,6 +26,7 @@ export default function EditProfileModal({ open, onCloseAction }: Props) {
   const [aboutMe, setAboutMe] = useState(profileData?.aboutMe || "");
   const [email, setEmail] = useState(profileData?.email || "");
   const [phone, setPhone] = useState(profileData?.phone || "");
+  const [brand, setBrand] = useState(profileData?.brand || "");
   const [categoryId, setCategoryId] = useState(String(profileData?.categoryId ?? ""));
   const [subCategoryId, setSubCategoryId] = useState(String(profileData?.subCategoryId ?? ""));
 
@@ -114,6 +115,14 @@ export default function EditProfileModal({ open, onCloseAction }: Props) {
       endpoint: "/profile/phone",
       body: { newCountryCode: "+20", newPhone: phone },
       successMessage: "تم تحديث الهاتف",
+    });
+
+  const updateBrand = () =>
+    handleRequest({
+      type: "brand",
+      endpoint: "/profile/brand",
+      body: { brand },
+      successMessage: "تم تحديث المصدر / الماركة",
     });
 
   const updateCategory = () => {
@@ -249,6 +258,16 @@ export default function EditProfileModal({ open, onCloseAction }: Props) {
             setValue={setPhone}
             loading={loadingType === "phone"}
             onSave={updatePhone}
+            btn={btn}
+          />
+
+          {/* BRAND */}
+          <Field
+            label="المصدر / الماركة"
+            value={brand}
+            setValue={setBrand}
+            loading={loadingType === "brand"}
+            onSave={updateBrand}
             btn={btn}
           />
 

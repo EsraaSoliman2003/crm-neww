@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FileText, Mail, Package, Phone, SquarePen, Tags } from "lucide-react";
+import { BadgeCheck, FileText, Mail, Package, Phone, SquarePen, Tags } from "lucide-react";
 import Images from "./_components/Images";
 import { useAuth } from "@/context/AuthContext";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
@@ -150,6 +150,14 @@ export default function Page() {
                 {profileData?.categoryName
                   ? [profileData.categoryName, profileData.subCategoryName].filter(Boolean).join(" / ")
                   : "لم يتم تحديد التصنيف"}
+              </span>
+            </div>
+
+            {/* brand (edited from "تعديل البيانات") */}
+            <div className="flex items-center justify-between gap-3 border border-gray-100 bg-gray-50 p-3">
+              <BadgeCheck size={18} className="shrink-0 text-amber-500" />
+              <span className="text-right text-sm font-medium text-gray-700">
+                {profileData?.brand || "لم يتم تحديد المصدر / الماركة"}
               </span>
             </div>
           </div>
