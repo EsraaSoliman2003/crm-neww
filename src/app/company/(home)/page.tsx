@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Building2, FileText, Mail, Phone, SquarePen } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { useAuth } from "@/context/AuthContext";
-import { fetchCompanyEstimates } from "@/rtk/slices/companiesSlice";
 import Link from "next/link";
 import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG, default_image } from "@/assets";
-import { formatMoney } from "@/lib/companyPricing";
+import {
+  CompanyEstimatePricing,
+  formatMoney,
+  getCompanyEstimatesPricing,
+} from "@/lib/companyPricing";
 import { ProfileData } from "@/lib/dtos";
 import axios from "@/lib/axios";
 import Loading from "@/skilton/Loading";
@@ -19,9 +21,10 @@ import Table from "@/components/table/Table";
 import Image from "next/image";
 
 export default function Page() {
-  const dispatch = useAppDispatch();
   const { user, setProfileData, profileData } = useAuth();
-  const { estimates, estimatesLoading } = useAppSelector((s) => s.companies);
+  // "مقايساتي" = estimates the company created + shared ones where it raised an item
+  const [myEstimates, setMyEstimates] = useState<CompanyEstimatePricing[]>([]);
+  const [estimatesLoading, setEstimatesLoading] = useState(false);
   // Get profile data
   const [loading, setLoading] = useState<boolean>(false);
   useEffect(() => {
@@ -37,11 +40,22 @@ export default function Page() {
         setLoading(false);
       }
     };
+    const getEstimates = async (companyId: number) => {
+      try {
+        setEstimatesLoading(true);
+        const all = await getCompanyEstimatesPricing(companyId);
+        setMyEstimates(all.filter((e) => e.isOwn || e.raisedItemsCount > 0));
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setEstimatesLoading(false);
+      }
+    };
     if (user && user.id) {
-      dispatch(fetchCompanyEstimates(Number(user.id)));
+      void getEstimates(Number(user.id));
       getProfile();
     }
-  }, [dispatch, user, setProfileData]);
+  }, [user, setProfileData]);
 
   const [openEdit, setOpenEdit] = useState(false);
   if (loading) {
@@ -143,33 +157,26 @@ export default function Page() {
 
           {estimatesLoading ? (
             <Loader />
-          ) : estimates.length > 0 ? (
+          ) : myEstimates.length > 0 ? (
             <Table
-              data={estimates}
+              data={myEstimates}
               getRowKeyAction={(row) => row.estimateId}
-              tableClassName="min-w-290"
+              tableClassName="min-w-[700px]"
               emptyText="لا يوجد بيانات"
               columns={[
                 { key: "id", header: "#", render: (_, index) => index + 1 },
                 { key: "estimateName", header: "اسم المقايسة" },
-
                 {
-                  key: "estimateComplete",
-                  header: "مرحلة المقايسة",
-                  render: (row) => row?.stageName,
-                  filterable: true,
-                },
-
-                {
-                  key: "estimateStage",
-                  header: "تمام المقايسة",
-                  render: (row) => row?.completeName,
-                  filterable: true,
+                  key: "systemTotal",
+                  header: "عرض المنظومة",
+                  render: (row) => formatMoney(row.systemTotal),
                 },
                 {
-                  key: "price",
-                  header: "الإجمالي بعد الرفع",
-                  render: (row) => formatMoney(row.price),
+                  key: "companyTotal",
+                  header: "العرض بعد رفع البنود",
+                  className: "font-bold text-gray-900",
+                  // empty until at least one item is raised
+                  render: (row) => (row.raisedItemsCount > 0 ? formatMoney(row.companyTotal) : null),
                 },
                 {
                   key: "actions",
@@ -189,7 +196,15 @@ export default function Page() {
               ]}
             />
           ) : (
-            <EmptyState image={card2BG} title="لا يوجد لديك بيانات" />
+            <div className="space-y-4 text-center">
+              <EmptyState image={card2BG} title="لا توجد مقايسات بعد" />
+              <Link
+                href="/company/estimates/add"
+                className="inline-block bg-[#bf0200] px-4 py-2 font-semibold text-white hover:bg-[#9f0200]"
+              >
+                + إضافة مقايسة
+              </Link>
+            </div>
           )}
         </div>
       </div>

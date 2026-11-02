@@ -10,6 +10,7 @@ import {
   FileText,
   Building2,
   ClipboardList,
+  FilePlus,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -184,6 +185,11 @@ export default function BottomBar({ pathname }: { pathname: string }) {
             name: "المقايسات",
             icon: <Box className="text-xl" />,
             path: "/company/estimates",
+          },
+          {
+            name: "إضافة مقايسة",
+            icon: <FilePlus className="text-xl" />,
+            path: "/company/estimates/add",
           },
         ]
       : []),

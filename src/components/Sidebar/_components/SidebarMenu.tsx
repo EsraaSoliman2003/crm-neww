@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   Factory,
   FileSpreadsheet,
+  FilePlus,
   Files,
   FlaskConical,
   Home,
@@ -101,6 +102,10 @@ function isPathActive(pathname: string, itemPath: string) {
     itemPath === "/supplier/material"
   ) {
     return pathname === itemPath;
+  }
+  // "إضافة مقايسة" has its own link; estimate details still highlight "المقايسات"
+  if (itemPath === "/company/estimates" && pathname.startsWith("/company/estimates/add")) {
+    return false;
   }
   return pathname === itemPath || pathname.startsWith(`${itemPath}/`);
 }
@@ -384,6 +389,12 @@ export default function SidebarMenu({
       name: "المقايسات",
       icon: <FileSpreadsheet size={20} />,
       path: "/company/estimates",
+      key: "portal",
+    },
+    {
+      name: "إضافة مقايسة",
+      icon: <FilePlus size={20} />,
+      path: "/company/estimates/add",
       key: "portal",
     },
   ];

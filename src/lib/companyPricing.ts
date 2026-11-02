@@ -14,7 +14,34 @@ export type CompanyEstimatePricing = {
   raisedItemsCount: number;
   systemTotal: number;
   companyTotal: number;
+  /** created by the company itself (not shared by the admin) */
+  isOwn: boolean;
 };
+
+export type CompanyCatalogItem = {
+  itemId: number;
+  itemName: string;
+  categoryName: string | null;
+  subCategoryName: string | null;
+  unitName: string | null;
+  systemPrice: number;
+  isAnalyzed: boolean;
+};
+
+export type CreateCompanyEstimate = {
+  name: string;
+  estimateNumber?: string;
+  estimateStageId: number;
+  estimateCompleteId: number;
+  notes?: string;
+  items: { itemId: number; quantity: number }[];
+};
+
+export const getItemsCatalog = async () =>
+  (await instance.get<CompanyCatalogItem[]>("Company/items-catalog")).data;
+
+export const createCompanyEstimate = async (body: CreateCompanyEstimate) =>
+  (await instance.post<CompanyEstimatePricing>("Company/estimates", body)).data;
 
 export type CompanyEstimateItemPricing = {
   itemId: number;
