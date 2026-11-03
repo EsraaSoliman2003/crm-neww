@@ -134,6 +134,14 @@ const estimatesSlice = createSlice({
     clearSelectedEstimate: (state) => {
       state.selectedEstimate = null;
     },
+    // quantity edited inline in the estimates table
+    setEstimateQuantity: (
+      state,
+      action: { payload: { id: number; quantity: number } },
+    ) => {
+      const estimate = state.data.find((e) => e.id === action.payload.id);
+      if (estimate) estimate.quantity = action.payload.quantity;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -222,7 +230,7 @@ const estimatesSlice = createSlice({
   },
 });
 
-export const { resetEstimatesState, clearSelectedEstimate } =
+export const { resetEstimatesState, clearSelectedEstimate, setEstimateQuantity } =
   estimatesSlice.actions;
 
 export default estimatesSlice.reducer;

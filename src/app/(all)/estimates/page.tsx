@@ -7,7 +7,8 @@ import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG } from "@/assets";
-import { deleteEstimate, fetchEstimates } from "@/rtk/slices/estimatesSlice";
+import { deleteEstimate, fetchEstimates, setEstimateQuantity } from "@/rtk/slices/estimatesSlice";
+import EstimateQuantityCell from "./_components/EstimateQuantityCell";
 import { confirmDelete } from "@/utils/confirmDelete";
 import ButtonBar from "@/components/buttonBar/ButtonBar";
 import Link from "next/link";
@@ -296,6 +297,21 @@ export default function Page() {
                 width: "150px",
                 className: "whitespace-normal! wrap-break-word!",
                 filterable: true,
+              },
+              {
+                key: "quantity",
+                header: "الكمية",
+                width: "110px",
+                exportValue: (row) => row.quantity ?? 0,
+                render: (row) => (
+                  <EstimateQuantityCell
+                    estimateId={row.id}
+                    quantity={row.quantity}
+                    onSavedAction={(quantity) =>
+                      dispatch(setEstimateQuantity({ id: row.id, quantity }))
+                    }
+                  />
+                ),
               },
               {
                 key: "estimateComplete",
