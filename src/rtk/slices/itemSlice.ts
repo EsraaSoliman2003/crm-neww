@@ -113,6 +113,8 @@ export interface AnalyzeItemDetails {
       note?: string | null;
     };
     quantity: number;
+    /** waste entered with this material in the item's analysis (0.05 = 5%) */
+    waste?: number;
   }[];
 }
 

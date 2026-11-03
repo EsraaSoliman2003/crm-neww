@@ -237,8 +237,10 @@ export default function ManufacturingDetailsPage() {
   const getMaterialWaste = (
     row: AnalyzeItemDetails["itemSupplierMaterials"][number],
   ) => {
+    // the waste actually used for this material in the item's analysis
     const supplierMaterial = row.supplierMaterial;
     return (
+      row.waste ??
       supplierMaterial.waste ??
       masterMaterialsById.get(supplierMaterial.materialId ?? 0)?.waste
     );

@@ -28,13 +28,14 @@ export default function DisplayTotalSection({ form, percentage }: Props) {
     const currentMaterial = masterMaterialsById.get(materialId ?? 0);
     const base =
       (material.price ?? currentRecord?.price ?? 0) * material.quantity;
+    // the waste entered with this material in the analysis comes first
     return (
       total +
       base *
         (1 +
-          (currentMaterial?.waste ??
+          (material.waste ??
+            currentMaterial?.waste ??
             currentRecord?.waste ??
-            material.waste ??
             0))
     );
   }, 0);

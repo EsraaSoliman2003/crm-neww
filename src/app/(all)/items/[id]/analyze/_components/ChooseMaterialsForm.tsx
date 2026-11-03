@@ -44,6 +44,8 @@ export default function ChooseMaterialsForm({
   const [selectedSupplierMaterialId, setSelectedSupplierMaterialId] =
     useState(selectedMasterSupplierMaterialId ?? "");
   const [qty, setQty] = useState("");
+  // waste (%) entered with each material in this item's analysis
+  const [wastePct, setWastePct] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [subCategoryFilter, setSubCategoryFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
@@ -237,10 +239,11 @@ export default function ChooseMaterialsForm({
             selected.unitName ??
             materialGroup?.material.unitName ??
             "",
+          // the waste entered with this material in the analysis
           waste:
+            selected.waste ??
             masterMaterial?.waste ??
             materialGroup?.material.waste ??
-            selected.waste ??
             0,
           supplierId:
             selected.supplierId ?? supplier?.supplierId ?? 0,
@@ -304,13 +307,20 @@ export default function ChooseMaterialsForm({
       supplier.supplierMaterialId === Number(selectedSupplierMaterialId),
   );
   // --------------new-------------
+  const wasteValid =
+    wastePct.trim() !== "" &&
+    Number.isFinite(Number(wastePct)) &&
+    Number(wastePct) >= 0 &&
+    Number(wastePct) < 100;
+
   const onAdded = () => {
     if (
       !selectedMaterial ||
       !selectedSupplier ||
       !qty ||
       !Number.isFinite(Number(qty)) ||
-      Number(qty) <= 0
+      Number(qty) <= 0 ||
+      !wasteValid
     ) {
       return;
     }
@@ -328,7 +338,7 @@ export default function ChooseMaterialsForm({
           categoryName: selectedMaterial.material.categoryName,
           subCategoryName: selectedMaterial.material.subCategoryName,
           unitName: selectedMaterial.material.unitName,
-          waste: selectedMaterial.material.waste,
+          waste: Number(wastePct) / 100,
           supplierId: selectedSupplier.supplierId,
           supplierName: selectedSupplier.name,
           price: selectedSupplier.price,
@@ -341,6 +351,7 @@ export default function ChooseMaterialsForm({
     setSelectedMaterialId("");
     setSelectedSupplierMaterialId("");
     setQty("");
+    setWastePct("");
   };
   // delete
   const handleDeleteItem = (
@@ -360,7 +371,8 @@ export default function ChooseMaterialsForm({
     !selectedSupplier ||
     !qty ||
     !Number.isFinite(Number(qty)) ||
-    Number(qty) <= 0;
+    Number(qty) <= 0 ||
+    !wasteValid;
   return (
     <>
       <div className="space-y-6 border border-gray-200 bg-white p-5 shadow-sm">
@@ -418,7 +430,7 @@ export default function ChooseMaterialsForm({
         </div>
 
         <div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr]">
             <Dropdown
               label="الخامة والوحدة والمورد والسعر"
               placeholder="اختر الخامة والوحدة والمورد والسعر"
@@ -439,6 +451,20 @@ export default function ChooseMaterialsForm({
                 type="number"
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
+              />
+            </div>
+            <div className="flex-1">
+              <Input
+                name="الهالك"
+                label="الهالك (%)"
+                placeholder={
+                  selectedMaterial
+                    ? `هالك الخامة: ${Math.round((selectedMaterial.material.waste ?? 0) * 100)}%`
+                    : "الهالك"
+                }
+                type="number"
+                value={wastePct}
+                onChange={(e) => setWastePct(e.target.value)}
               />
             </div>
           </div>

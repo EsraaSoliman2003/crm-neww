@@ -97,7 +97,8 @@ export function buildEstimateComponents(inputs: ComponentsInput[]): EstimateComp
 
     for (const link of supplierMaterials) {
       const sm = link.supplierMaterial;
-      const waste = num(sm.materialWaste ?? sm.waste);
+      // waste entered with the material in this item's analysis
+      const waste = num(link.waste ?? sm.materialWaste ?? sm.waste);
       const net = num(link.quantity) * q;
       const withWaste = net * (1 + waste);
       const row = materials.get(sm.id) ?? {

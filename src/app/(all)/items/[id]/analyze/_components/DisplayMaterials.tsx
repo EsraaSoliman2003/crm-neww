@@ -75,12 +75,6 @@ export default function DisplayMaterials({ data, onDelete, onEdit }: Props) {
           },
 
           {
-            key: "waste",
-            header: "الهالك",
-            render: (row) => `${row.waste * 100}%`,
-          },
-
-          {
             key: "note",
             header: "الملاحظات",
             render: (row) => row.note || "-",

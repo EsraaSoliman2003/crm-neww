@@ -74,7 +74,6 @@ function MaterialPageContent() {
     return data.map((item) => ({
       id: item.id,
       name: item.name,
-      waste: item.waste,
       unitId: item.unitId,
       unitName: item.unitName,
       entityCategoryMappingId: item.entityCategoryMappingId,
@@ -326,15 +325,6 @@ function MaterialPageContent() {
                     return `${s.supplierName}${admin} - ${s.price}`;
                   })
                   .join(" | ");
-              },
-            },
-
-            {
-              key: "waste",
-              header: "الهالك",
-              render: (row) => {
-                const value = Number(row.waste) || 0;
-                return `${(value * 100)}%`;
               },
             },
 

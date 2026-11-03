@@ -272,7 +272,8 @@ export default function ItemsPage() {
             subCategoryName:
               selected.subCategoryName ?? currentRecord?.subCategoryName,
             unitName: selected.unitName ?? currentRecord?.unitName,
-            waste: selected.waste ?? currentRecord?.waste,
+            // the waste saved with this material in the item analysis
+            waste: item.waste ?? selected.waste ?? currentRecord?.waste,
             supplierId: selected.supplierId ?? currentRecord?.supplierId,
             supplierName:
               selected.supplierName ?? currentRecord?.supplierName,
@@ -410,9 +411,10 @@ export default function ItemsPage() {
       const payload = {
         id: form.id,
         suppierMaterials: form.supplierMaterials.map(
-          ({ supplierMaterialId, quantity }) => ({
+          ({ supplierMaterialId, quantity, waste }) => ({
             supplierMaterialId,
             quantity,
+            waste: waste ?? 0,
           }),
         ),
         tests: form.tests.map((t) => ({
