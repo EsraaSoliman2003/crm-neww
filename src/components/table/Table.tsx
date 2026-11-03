@@ -84,8 +84,6 @@ type TableProps<T> = {
   onFilteredDataChange?: (data: T[]) => void;
   filterContent?: React.ReactNode;
   fillViewport?: boolean;
-  /** With fillViewport: the table ends exactly at the bottom of the screen (no page scroll). */
-  fitToScreen?: boolean;
   viewportFooterRef?: React.RefObject<HTMLElement | null>;
   excelTemplateColumns?: {
     header: string;
@@ -113,7 +111,6 @@ export default function Table<T>({
   onFilteredDataChange,
   filterContent,
   fillViewport = false,
-  fitToScreen = false,
   viewportFooterRef,
   printContent,
 }: TableProps<T>) {
@@ -991,11 +988,7 @@ export default function Table<T>({
 
       <div
         ref={scrollAreaRef}
-        // fitToScreen: use the height measured above (space left under the table's top)
-        // instead of the fixed 100dvh-12rem, for pages with content above the table
-        className={`${fillViewport
-          ? `${fitToScreen ? "max-h-[var(--table-viewport-height,calc(100dvh-12rem))]" : "max-h-[calc(100dvh-12rem)]"} overflow-auto`
-          : ""
+        className={`${fillViewport ? "max-h-[calc(100dvh-12rem)] overflow-auto" : ""
           } relative w-full rounded-xl border border-gray-200 bg-white shadow-sm`}
       >
         <table

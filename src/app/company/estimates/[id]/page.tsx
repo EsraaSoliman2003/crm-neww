@@ -94,8 +94,7 @@ export default function CompanyEstimateDetailsPage() {
   const hasRaise = (details?.raisedItemsCount ?? 0) > 0;
 
   return (
-    // no min-h-screen / bottom padding: the table fills the rest of the screen and scrolls itself
-    <div className="space-y-6 px-6 pt-6 md:px-8 md:pt-8">
+    <div className="space-y-6 p-6 md:p-8">
       {/* Header */}
       <div className="sticky top-[68px] z-30 -mx-6 bg-[#f7f7f7] px-6 pb-4 pt-1 md:-mx-8 md:top-[84px] md:px-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -171,29 +170,19 @@ export default function CompanyEstimateDetailsPage() {
             <Table
               data={details.items}
               getRowKeyAction={(row) => `${row.itemId}`}
-              // scrolls inside its own area (sticky header + totals row) instead of the whole page
-              fillViewport
-              fitToScreen
-              tableClassName="min-w-[1050px]"
+              // fits the screen width: no inner scrollbar, no horizontal scroll.
+              // "اسم البند" is the table's main column (takes the free space and wraps),
+              // the other columns size to their content.
               emptyText="لا توجد بنود"
               columns={[
-                { key: "index", header: "#", width: "40px", render: (_row, index) => index + 1 },
-                {
-                  key: "itemName",
-                  header: "البند",
-                  width: "220px",
-                  // long item names wrap instead of widening the table
-                  render: (row) => (
-                    <div className="w-[220px] whitespace-normal wrap-break-word leading-6">{row.itemName}</div>
-                  ),
-                },
+                { key: "index", header: "#", render: (_row, index) => index + 1 },
+                { key: "itemName", header: "اسم البند" },
                 {
                   key: "categoryName",
                   header: "التصنيف",
-                  width: "150px",
                   filterable: true,
                   render: (row) => (
-                    <div className="w-[150px] whitespace-normal wrap-break-word text-xs leading-5">
+                    <div className="min-w-24 max-w-40 whitespace-normal text-xs leading-5">
                       {[row.categoryName, row.subCategoryName].filter(Boolean).join(" / ") || "-"}
                     </div>
                   ),
@@ -233,12 +222,12 @@ export default function CompanyEstimateDetailsPage() {
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && changed) void savePrice(row.itemId, row.companyPrice);
                           }}
-                          className="w-28 border border-gray-300 px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-200"
+                          className="w-24 border border-gray-300 px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-200"
                         />
                         <button
                           onClick={() => savePrice(row.itemId, row.companyPrice)}
                           disabled={!changed || busy}
-                          className="bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                          className="bg-blue-600 px-2.5 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                         >
                           {busy ? "..." : "حفظ"}
                         </button>
