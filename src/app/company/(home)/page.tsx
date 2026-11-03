@@ -19,6 +19,7 @@ import EditProfileModal from "./_components/EditProfileModal";
 import Images from "@/app/supplier/(home)/_components/Images";
 import Table from "@/components/table/Table";
 import Image from "next/image";
+import EmailVerification from "@/components/emailVerification/EmailVerification";
 
 export default function Page() {
   const { user, setProfileData, profileData } = useAuth();
@@ -131,9 +132,12 @@ export default function Page() {
             {/* email */}
             <div className="flex items-center justify-between gap-3 border border-gray-100 bg-gray-50 p-3">
               <Mail size={18} className="shrink-0 text-blue-500" />
-              <span className="truncate text-sm font-medium text-gray-700">
-                {profileData?.email || "-"}
-              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-sm font-medium text-gray-700">
+                  {profileData?.email || "-"}
+                </span>
+                <EmailVerification />
+              </div>
             </div>
 
             {/* phone */}

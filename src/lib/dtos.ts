@@ -48,6 +48,7 @@ export interface ProfileData {
   imageUrl: string | null;
   aboutMe: string | null;
   coverImage: string | null;
+  emailConfirmed?: boolean;
   // supplier only: general category and sub-category, edited from the profile
   categoryId?: number | null;
   categoryName?: string | null;
