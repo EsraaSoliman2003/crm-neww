@@ -15,6 +15,7 @@ import {
   createCompanyEstimate,
   formatMoney,
   getItemsCatalog,
+  getProjectOptions,
 } from "@/lib/companyPricing";
 
 type Option = { id: number; name: string };
@@ -24,6 +25,7 @@ type FormState = {
   estimateNumber: string;
   stageId: string;
   completeId: string;
+  projectId: string;
   notes: string;
 };
 
@@ -36,11 +38,13 @@ export default function AddCompanyEstimatePage() {
     estimateNumber: "",
     stageId: "",
     completeId: "",
+    projectId: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState | "items", string>>>({});
   const [stages, setStages] = useState<Option[]>([]);
   const [completes, setCompletes] = useState<Option[]>([]);
+  const [projects, setProjects] = useState<Option[]>([]);
   const [catalog, setCatalog] = useState<CompanyCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,11 +58,13 @@ export default function AddCompanyEstimatePage() {
     const load = async () => {
       try {
         setLoading(true);
-        const [stagesRes, completesRes, items] = await Promise.all([
+        const [stagesRes, completesRes, items, projectOptions] = await Promise.all([
           axios.get<Option[]>("EstimateStage"),
           axios.get<Option[]>("EstimateComplete"),
           getItemsCatalog(),
+          getProjectOptions(),
         ]);
+        setProjects(projectOptions);
         setStages(stagesRes.data);
         setCompletes(completesRes.data);
         setCatalog(items);
@@ -127,6 +133,7 @@ export default function AddCompanyEstimatePage() {
         estimateNumber: form.estimateNumber.trim() || undefined,
         estimateStageId: Number(form.stageId),
         estimateCompleteId: Number(form.completeId),
+        projectId: form.projectId ? Number(form.projectId) : undefined,
         notes: form.notes.trim() || undefined,
         items: chosen.map((item) => ({
           itemId: item.itemId,
@@ -173,6 +180,18 @@ export default function AddCompanyEstimatePage() {
               value={form.estimateNumber}
               placeholder="يُنشأ تلقائيًا إذا تُرك فارغًا"
               onChange={(e) => setField("estimateNumber", e.target.value)}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <Dropdown
+              label="اختر المشروع"
+              placeholder={projects.length ? "اختر المشروع المرتبط بالمقايسة (اختياري)" : "لا توجد مشاريع"}
+              options={[
+                { value: "", label: "بدون مشروع" },
+                ...projects.map((p) => ({ value: String(p.id), label: p.name })),
+              ]}
+              selected={form.projectId}
+              onSelect={(opt) => setField("projectId", opt.value)}
             />
           </div>
           <div>

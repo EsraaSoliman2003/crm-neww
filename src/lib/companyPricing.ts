@@ -33,9 +33,13 @@ export type CreateCompanyEstimate = {
   estimateNumber?: string;
   estimateStageId: number;
   estimateCompleteId: number;
+  projectId?: number;
   notes?: string;
   items: { itemId: number; quantity: number }[];
 };
+
+export const getProjectOptions = async () =>
+  (await instance.get<{ id: number; name: string }[]>("Company/projects")).data;
 
 export const getItemsCatalog = async () =>
   (await instance.get<CompanyCatalogItem[]>("Company/items-catalog")).data;
