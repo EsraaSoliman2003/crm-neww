@@ -83,6 +83,19 @@ export interface Estimate {
 
   totalItemPriceBefore: number;
   totalItemPriceAfter: number;
+
+  /** "الشركة والتكلفة": the owner + every company that raised item prices, each with its own total */
+  companyOffers?: EstimateCompanyOffer[];
+}
+
+export interface EstimateCompanyOffer {
+  companyId: number;
+  companyName: string;
+  total: number;
+  isOwner: boolean;
+  /** true = the company's own offer (raised items); false = owner shown with the estimate cost */
+  hasOffer: boolean;
+  raisedItemsCount: number;
 }
 
 export interface Material {

@@ -16,6 +16,8 @@ import Table from "@/components/table/Table";
 import { Eye, Sigma, SquarePen, Trash2 } from "lucide-react";
 import Dropdown from "@/components/dropdown/DropDown";
 import { formatProjectCost } from "@/lib/formatProjectCost";
+import EstimatePricesModal from "@/components/companyPricing/EstimatePricesModal";
+import { Estimate } from "@/utils/dtos";
 
 export default function Page() {
   const router = useRouter();
@@ -66,10 +68,23 @@ export default function Page() {
     })),
   ];
 
+  // every company on the estimate (owner + companies that raised prices)
+  const companiesOf = (est: Estimate) =>
+    est.companyOffers?.length
+      ? est.companyOffers.map((o) => o.companyName)
+      : [est.companyName];
+
   const companyOptions = buildOptions(
-    data.map((est) => est.companyName),
+    data.flatMap(companiesOf),
     "كل الشركات",
   );
+
+  // a company's offer opened from "الشركة والتكلفة"
+  const [openOffer, setOpenOffer] = useState<{
+    estimateId: number;
+    companyId: number;
+    companyName: string;
+  } | null>(null);
 
   const projectOptions = buildOptions(
     data.map((est) => est.projectName),
@@ -89,7 +104,7 @@ export default function Page() {
   const filteredEstimates = data.filter(
     (est) =>
       est.name.toLowerCase().includes(form.name.toLowerCase()) &&
-      (form.companyName === "" || est.companyName === form.companyName) &&
+      (form.companyName === "" || companiesOf(est).includes(form.companyName)) &&
       (form.projectName === "" || est.projectName === form.projectName) &&
       (form.estimateComplete === "" ||
         est.estimateComplete?.name === form.estimateComplete) &&
@@ -235,11 +250,45 @@ export default function Page() {
                 filterable: true,
               },
               {
-                key: "companyName",
-                header: "اسم الشركة",
-                width: "105px",
-                className: "whitespace-normal! wrap-break-word!",
-                filterable: true,
+                key: "companyOffers",
+                header: "الشركة والتكلفة",
+                width: "190px",
+                className: "whitespace-normal!",
+                // one line per company: its name and its own offer total.
+                // A company with an offer opens only its prices; the owner
+                // without an offer opens the estimate (its cost) as before.
+                exportValue: (row) =>
+                  (row.companyOffers ?? [])
+                    .map((o) => `${o.companyName} - ${formatProjectCost(o.total)}`)
+                    .join(" / "),
+                render: (row) => {
+                  const offers = row.companyOffers?.length
+                    ? row.companyOffers
+                    : [{ companyId: row.companyId, companyName: row.companyName, total: row.totalItemPriceBefore, isOwner: true, hasOffer: false, raisedItemsCount: 0 }];
+                  return (
+                    <div className="flex flex-col gap-1">
+                      {offers.map((o) => (
+                        <button
+                          key={o.companyId}
+                          type="button"
+                          title={o.hasOffer ? `عرض سعر ${o.companyName} (${o.raisedItemsCount} بند مرفوع)` : "تكلفة المقايسة"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (o.hasOffer)
+                              setOpenOffer({ estimateId: row.id, companyId: o.companyId, companyName: o.companyName });
+                            else router.push(`/estimates/${row.id}`);
+                          }}
+                          className={`flex items-baseline justify-between gap-2 rounded px-1 text-right text-xs leading-5 hover:bg-orange-50 ${
+                            o.hasOffer ? "text-[#bf0200]" : "text-gray-800"
+                          }`}
+                        >
+                          <span className={o.isOwner ? "font-semibold" : undefined}>{o.companyName}</span>
+                          <span className="shrink-0 whitespace-nowrap font-bold">{formatProjectCost(o.total)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                },
               },
               {
                 key: "projectName",
@@ -263,14 +312,6 @@ export default function Page() {
                 className: "whitespace-normal!",
                 render: (row) => row.estimateStage?.name,
                 filterable: true,
-              },
-              {
-                key: "totalItemPriceBefore",
-                header: "التكلفة",
-                width: "80px",
-                className: "whitespace-normal!",
-                render: (row) => formatProjectCost(row.totalItemPriceBefore),
-                showTotal: true,
               },
               {
                 key: "totalItemPriceAfter",
@@ -331,6 +372,14 @@ export default function Page() {
         </div>
       ) : (
         <EmptyState image={card2BG} title="لا يوجد لديك مقايسات" />
+      )}
+      {openOffer && (
+        <EstimatePricesModal
+          companyId={openOffer.companyId}
+          estimateId={openOffer.estimateId}
+          companyName={openOffer.companyName}
+          onCloseAction={() => setOpenOffer(null)}
+        />
       )}
     </div>
   );
