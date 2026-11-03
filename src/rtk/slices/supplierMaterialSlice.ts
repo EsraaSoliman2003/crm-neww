@@ -37,6 +37,11 @@ export type SupplierMaterialBySupplier = {
   categoryId?: number | null;
   subCategoryId?: number | null;
   canEditCategory?: boolean;
+  // price request waiting for the admin (price / validUntil above are the approved ones)
+  pendingPrice?: number | null;
+  pendingValidUntil?: string | null;
+  pendingRequestedAt?: string | null;
+  hasPendingRequest?: boolean;
 };
 
 interface MaterialsState {
@@ -163,22 +168,31 @@ export const fetchGlobalSupplierMaterials = createAsyncThunk(
 /* ===========================
    Set Supplier Material Price
 =========================== */
+// The supplier's price + valid-until go to the admin for approval.
 export const setSupplierPrice = createAsyncThunk<
-  { materialId: number; price: number; isAll: boolean },
-  { supplierId: number; materialId: number; price: number; isAll: boolean }
+  { materialId: number; price: number; validUntil: string; message: string },
+  { supplierId: number; materialId: number; price: number; validUntil: string }
 >("suppliers/setPrice", async (data) => {
-  await instance.post(`/Supplier/set-price?isAll=${data.isAll}`, {
+  const res = await instance.post<{ message: string }>(`/Supplier/set-price?isAll=false`, {
     supplierId: data.supplierId,
     materialId: data.materialId,
     price: data.price,
+    validUntil: data.validUntil,
   });
 
   return {
     materialId: data.materialId,
     price: data.price,
-    isAll: data.isAll,
+    validUntil: data.validUntil,
+    message: res.data?.message ?? "تم إرسال السعر للمراجعة",
   };
 });
+
+export const approveSupplierPrice = async (supplierMaterialId: number) =>
+  (await instance.post<{ message: string }>(`SupplierMaterial/${supplierMaterialId}/approve-price`)).data;
+
+export const rejectSupplierPrice = async (supplierMaterialId: number) =>
+  (await instance.post<{ message: string }>(`SupplierMaterial/${supplierMaterialId}/reject-price`)).data;
 
 /* ===========================
    Slice
@@ -283,20 +297,20 @@ const materialsSlice = createSlice({
       .addCase(setSupplierPrice.fulfilled, (state, action) => {
         state.settingPrice = false;
 
-        const { materialId, price, isAll } = action.payload;
-
-        if (isAll) {
-          state.supplierMaterials = state.supplierMaterials.map((m) => ({
-            ...m,
-            price,
-          }));
-        } else {
-          const item = state.supplierMaterials.find(
-            (m) => m.materialId === materialId,
-          );
-          if (item) {
+        // the request waits for the admin: an approved price stays as it is
+        const { materialId, price, validUntil } = action.payload;
+        const item = state.supplierMaterials.find(
+          (m) => m.materialId === materialId,
+        );
+        if (item) {
+          if (item.isApproved) {
+            item.pendingPrice = price;
+            item.pendingValidUntil = validUntil;
+          } else {
             item.price = price;
+            item.validUntil = validUntil;
           }
+          item.hasPendingRequest = true;
         }
       })
       .addCase(setSupplierPrice.rejected, (state) => {

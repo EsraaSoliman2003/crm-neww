@@ -1,18 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Download, FileText, Mail, MessageCircle, Package, Phone } from "lucide-react";
+import { Check, Download, FileText, Mail, MessageCircle, Package, Phone, X } from "lucide-react";
 import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG, default_image } from "@/assets";
 import { useAppDispatch, useAppSelector } from "@/rtk/hooks";
 import { useParams } from "next/navigation";
 import {
-  fetchGlobalSupplierMaterials,
+  approveSupplierPrice,
   fetchSupplierMaterialsBySupplier,
+  rejectSupplierPrice,
   SupplierMaterialBySupplier,
-  SupplierMaterialGlobal,
 } from "@/rtk/slices/supplierMaterialSlice";
+import {
+  formatDate,
+  SupplierPriceCell,
+  SupplierValidUntilCell,
+} from "@/components/supplierPrice/SupplierPriceCells";
 import { ProfileData } from "@/lib/dtos";
 import axios from "@/lib/axios";
 import Images from "@/app/supplier/(home)/_components/Images";
@@ -62,19 +67,15 @@ export default function Page() {
   const id = Number(params?.id);
   const dispatch = useAppDispatch();
 
-  const {
-    globalSupplierMaterials,
-    supplierMaterials,
-    loading: mLoading,
-  } = useAppSelector((s) => s.materialsWithSuppliers);
+  const { supplierMaterials, loading: mLoading } = useAppSelector(
+    (s) => s.materialsWithSuppliers,
+  );
 
   const [loading, setLoading] = useState<boolean>(false);
   const [profileData, setProfileData] = useState<ProfileData>();
   const [qrCodeImage, setQrCodeImage] = useState("");
   const [filteredSupplierMaterialsForPdf, setFilteredSupplierMaterialsForPdf] =
     useState<SupplierMaterialBySupplier[] | null>(null);
-  const [filteredAvailableMaterialsForPdf, setFilteredAvailableMaterialsForPdf] =
-    useState<SupplierMaterialGlobal[] | null>(null);
   useEffect(() => {
     if (!id) return;
 
@@ -116,19 +117,26 @@ export default function Page() {
     };
     if (id) {
       dispatch(fetchSupplierMaterialsBySupplier(Number(id)));
-      dispatch(fetchGlobalSupplierMaterials(Number(id)));
       getProfile();
     }
   }, [dispatch, id]);
 
-  const filteredData = Array.from(
-    new Map(
-      globalSupplierMaterials
-        .slice()
-        .reverse()
-        .map((item) => [item.id, item]),
-    ).values(),
-  ).reverse();
+  // approve / reject the supplier's price + valid-until request
+  const [decidingId, setDecidingId] = useState<number | null>(null);
+  const decide = async (row: SupplierMaterialBySupplier, approve: boolean) => {
+    if (!row.id) return;
+    if (!approve && !window.confirm(`رفض السعر المقدم لخامة "${row.materialName}"؟ سيظل السعر الحالي كما هو.`)) return;
+    try {
+      setDecidingId(row.id);
+      const res = approve ? await approveSupplierPrice(row.id) : await rejectSupplierPrice(row.id);
+      toast.success(res.message);
+      dispatch(fetchSupplierMaterialsBySupplier(Number(id)));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setDecidingId(null);
+    }
+  };
 
   const supplierPhone = profileData?.phone
     ? profileData.phone.startsWith("+")
@@ -164,24 +172,14 @@ export default function Page() {
     );
     const supplierMaterialsReport = buildReportTable(
       "خامات المورد",
-      ["#", "اسم الخامة", "التصنيف العام", "تصنيف الخامة", "السعر"],
+      ["#", "اسم الخامة", "التصنيف العام", "تصنيف الخامة", "السعر", "صالح حتى"],
       (filteredSupplierMaterialsForPdf ?? supplierMaterials).map((item, index) => [
         index + 1,
         item.materialName,
         item.categoryName || "-",
         item.subCategoryName || "-",
         `${item.price} جنيه`,
-      ]),
-    );
-    const availableMaterialsReport = buildReportTable(
-      "الخامات المتاحة",
-      ["#", "اسم الخامة", "التصنيف العام", "تصنيف الخامة", "السعر"],
-      (filteredAvailableMaterialsForPdf ?? filteredData).map((item, index) => [
-        index + 1,
-        item.materialName,
-        item.categoryName || "-",
-        item.subCategoryName || "-",
-        `${item.price} جنيه`,
+        formatDate(item.validUntil),
       ]),
     );
 
@@ -257,7 +255,6 @@ export default function Page() {
 
         ${supplierDetails}
         ${supplierMaterialsReport}
-        ${availableMaterialsReport}
       </body>
 
     </html>
@@ -302,27 +299,18 @@ export default function Page() {
         ["نبذة عن المورد", profileData.aboutMe || "لا توجد نبذة مضافة"],
       ]);
       const supplierMaterialsSheet = XLSX.utils.aoa_to_sheet([
-        ["#", "اسم الخامة", "التصنيف العام", "تصنيف الخامة", "السعر"],
+        ["#", "اسم الخامة", "التصنيف العام", "تصنيف الخامة", "السعر", "صالح حتى"],
         ...supplierMaterials.map((item, index) => [
           index + 1,
           item.materialName,
           item.categoryName || "-",
           item.subCategoryName || "-",
           item.price,
-        ]),
-      ]);
-      const availableMaterialsSheet = XLSX.utils.aoa_to_sheet([
-        ["#", "اسم الخامة", "التصنيف العام", "تصنيف الخامة", "السعر"],
-        ...filteredData.map((item, index) => [
-          index + 1,
-          item.materialName,
-          item.categoryName || "-",
-          item.subCategoryName || "-",
-          item.price,
+          formatDate(item.validUntil),
         ]),
       ]);
 
-      [supplierSheet, supplierMaterialsSheet, availableMaterialsSheet].forEach(
+      [supplierSheet, supplierMaterialsSheet].forEach(
         (sheet) => {
           sheet["!rightToLeft"] = true;
         },
@@ -334,19 +322,14 @@ export default function Page() {
         { wch: 24 },
         { wch: 24 },
         { wch: 16 },
+        { wch: 16 },
       ];
-      availableMaterialsSheet["!cols"] = supplierMaterialsSheet["!cols"];
 
       XLSX.utils.book_append_sheet(workbook, supplierSheet, "بيانات المورد");
       XLSX.utils.book_append_sheet(
         workbook,
         supplierMaterialsSheet,
         "خامات المورد",
-      );
-      XLSX.utils.book_append_sheet(
-        workbook,
-        availableMaterialsSheet,
-        "الخامات المتاحة",
       );
 
       const filename = `ملف المورد - ${profileData.fullName || id}`
@@ -389,45 +372,47 @@ export default function Page() {
     {
       key: "price" as const,
       header: "السعر",
-      className: "text-center font-medium text-gray-800",
-      render: (row: SupplierMaterialBySupplier) => `${row.price} جنيه`,
+      className: "text-center",
+      render: (row: SupplierMaterialBySupplier) => <SupplierPriceCell row={row} />,
+    },
+    {
+      key: "validUntil" as const,
+      header: "صالح حتى",
+      className: "text-center",
+      render: (row: SupplierMaterialBySupplier) => <SupplierValidUntilCell row={row} />,
+    },
+    {
+      key: "actions",
+      header: "الإجراءات",
+      className: "text-center",
+      render: (row: SupplierMaterialBySupplier) =>
+        row.hasPendingRequest ? (
+          <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              title="قبول السعر والتاريخ"
+              disabled={decidingId === row.id}
+              onClick={() => decide(row, true)}
+              className="rounded-full border border-green-600 p-1.5 text-green-600 hover:bg-green-50 disabled:opacity-50"
+            >
+              <Check size={16} />
+            </button>
+            <button
+              type="button"
+              title="رفض السعر"
+              disabled={decidingId === row.id}
+              onClick={() => decide(row, false)}
+              className="rounded-full border border-red-600 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <span className="text-xs text-gray-400">معتمد</span>
+        ),
     },
   ];
 
-  const globalSupplierMaterialsColumns = [
-    {
-      key: "index",
-      header: "#",
-      className: "text-center",
-      render: (_row: SupplierMaterialGlobal, index: number) => index + 1,
-    },
-    {
-      key: "materialName" as const,
-      header: "اسم الخامة",
-      className: "text-center",
-    },
-    {
-      key: "categoryName" as const,
-      header: "التصنيف العام",
-      className: "text-center",
-      render: (row: SupplierMaterialGlobal) => row.categoryName || "-",
-      filterable: true,
-    },
-    {
-      key: "subCategoryName" as const,
-      header: "تصنيف الخامة",
-      className: "text-center",
-      render: (row: SupplierMaterialGlobal) => row.subCategoryName || "-",
-      filterable: true,
-      filterDependsOn: "categoryName" as const,
-    },
-    {
-      key: "price" as const,
-      header: "السعر",
-      className: "text-center font-medium text-gray-800",
-      render: (row: SupplierMaterialGlobal) => `${row.price} جنيه`,
-    },
-  ];
 
   if (loading) {
     return (
@@ -592,7 +577,7 @@ export default function Page() {
             data={supplierMaterials}
             onFilteredDataChange={setFilteredSupplierMaterialsForPdf}
             getRowKeyAction={(row) => row.materialId}
-            tableClassName="min-w-290"
+            tableClassName=""
             emptyText="لا يوجد بيانات"
             columns={supplierMaterialsColumns}
           />
@@ -601,26 +586,6 @@ export default function Page() {
         )}
       </div>
 
-      {/* ================= MATERIALS ================= */}
-      <div className="px-6 pb-10 md:px-8">
-        <h2 className="mb-4 text-right text-xl font-bold">الخامات المتاحه</h2>
-
-        {mLoading ? (
-          <Loader />
-        ) : filteredData.length > 0 ? (
-          <Table
-            fillViewport
-            data={filteredData}
-            onFilteredDataChange={setFilteredAvailableMaterialsForPdf}
-            getRowKeyAction={(row) => row.id}
-            tableClassName="min-w-290"
-            emptyText="لا يوجد بيانات"
-            columns={globalSupplierMaterialsColumns}
-          />
-        ) : (
-          <EmptyState image={card2BG} title="لا يوجد لديك بيانات" />
-        )}
-      </div>
     </div>
   );
 }

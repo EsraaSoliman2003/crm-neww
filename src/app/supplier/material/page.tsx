@@ -17,6 +17,7 @@ import {
   printPriceInvoice,
 } from "./_components/printPriceInvoice";
 import Table from "@/components/table/Table";
+import { formatDate } from "@/components/supplierPrice/SupplierPriceCells";
 
 // every material in the system, with the system (admin) price and this supplier's own price
 type SystemMaterial = {
@@ -31,6 +32,8 @@ type SystemMaterial = {
   myPrice: number | null;
   myPriceIsApproved: boolean | null;
   myPriceValidUntil: string | null;
+  myPendingPrice: number | null;
+  myPendingValidUntil: string | null;
 };
 
 export default function Page() {
@@ -192,8 +195,20 @@ export default function Page() {
                         في انتظار الموافقة
                       </span>
                     )}
+                    {row.myPendingPrice != null && (
+                      <span className="text-[11px] text-amber-700">
+                        جديد: {formatPrice(row.myPendingPrice)} حتى {formatDate(row.myPendingValidUntil)} (في انتظار الموافقة)
+                      </span>
+                    )}
                   </div>
                 ),
+            },
+
+            {
+              key: "myPriceValidUntil",
+              header: "صالح حتى",
+              className: "text-center",
+              render: (row) => formatDate(row.myPriceValidUntil),
             },
 
             {
@@ -209,6 +224,7 @@ export default function Page() {
                         materialId: row.materialId,
                         materialName: row.materialName,
                         price: row.myPrice ?? 0,
+                        pendingPrice: row.myPendingPrice,
                         categoryName: row.categoryName ?? "",
                         subCategoryName: row.subCategoryName ?? "",
                       });

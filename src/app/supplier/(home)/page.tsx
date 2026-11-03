@@ -13,12 +13,12 @@ import Loader from "@/components/loader/Loader";
 import EmptyState from "@/components/emptyState/EmptyState";
 import { card2BG, default_image } from "@/assets";
 import EditPriceModal from "./_components/EditPriceModal";
-import Button from "@/components/button/Button";
 import { ProfileData } from "@/lib/dtos";
 import axios from "@/lib/axios";
 import Loading from "@/skilton/Loading";
 import EditProfileModal from "./_components/EditProfileModal";
 import EditCategoryModal from "./_components/EditCategoryModal";
+import { SupplierPriceCell, SupplierValidUntilCell } from "@/components/supplierPrice/SupplierPriceCells";
 import Table from "@/components/table/Table";
 import Image from "next/image";
 import EmailVerification from "@/components/emailVerification/EmailVerification";
@@ -172,17 +172,8 @@ export default function Page() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div className="text-right">
-              <h1 className="text-xl md:text-2xl font-bold">الخامات المتاحه</h1>
+              <h1 className="text-xl md:text-2xl font-bold">خاماتي</h1>
             </div>
-            {supplierMaterials.length !== 0 && (
-              <div className="flex gap-3">
-                <Button
-                  text="تعديل سعر الكل"
-                  onClick={() => setOpen(true)}
-                  disabled={supplierMaterials.length === 0}
-                />
-              </div>
-            )}
           </div>
 
           {mLoading ? (
@@ -224,9 +215,15 @@ export default function Page() {
                 {
                   key: "price",
                   header: "السعر",
-                  className: "text-center font-medium text-gray-800",
+                  className: "text-center",
+                  render: (row) => <SupplierPriceCell row={row} />,
+                },
 
-                  render: (row) => `${row.price} جنيه`,
+                {
+                  key: "validUntil",
+                  header: "صالح حتى",
+                  className: "text-center",
+                  render: (row) => <SupplierValidUntilCell row={row} />,
                 },
 
                 {

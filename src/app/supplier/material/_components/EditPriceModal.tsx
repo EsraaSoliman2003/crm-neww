@@ -14,6 +14,16 @@ type Props = {
     onSavedAction?: () => void;
 };
 
+// yyyy-mm-dd of a date, for <input type="date">
+const toDateInput = (date: Date) => {
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+};
+
+/**
+ * The supplier sends a new price with its valid-until date. Both go to the
+ * admin for approval; the approved price stays in use until then.
+ */
 export default function EditPriceModal({ open, onCloseAction, item, onSavedAction }: Props) {
     const { user } = useAuth();
     const dispatch = useAppDispatch();
@@ -22,7 +32,12 @@ export default function EditPriceModal({ open, onCloseAction, item, onSavedActio
         (s) => s.materialsWithSuppliers
     );
 
-    const [price, setPrice] = useState<number | "">(item?.price || "");
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const minDate = toDateInput(tomorrow);
+
+    const [price, setPrice] = useState<number | "">(item?.pendingPrice || item?.price || "");
+    const [validUntil, setValidUntil] = useState("");
     const [error, setError] = useState("");
 
     /* ===========================
@@ -45,6 +60,14 @@ export default function EditPriceModal({ open, onCloseAction, item, onSavedActio
             setError("السعر مطلوب ويجب أن يكون أكبر من 0");
             return false;
         }
+        if (!validUntil) {
+            setError("حدد تاريخ صلاحية السعر (صالح حتى)");
+            return false;
+        }
+        if (validUntil < minDate) {
+            setError("تاريخ \"صالح حتى\" يجب أن يكون بعد اليوم");
+            return false;
+        }
 
         setError("");
         return true;
@@ -55,22 +78,22 @@ export default function EditPriceModal({ open, onCloseAction, item, onSavedActio
     =========================== */
     const handleSubmit = async () => {
         if (!validate()) return;
-        if (!user?.id) {
+        if (!user?.id || !item) {
             toast.error("المستخدم غير موجود");
             return;
         }
 
         try {
-            await dispatch(
+            const result = await dispatch(
                 setSupplierPrice({
                     supplierId: Number(user.id),
-                    materialId: item?.materialId || 0,
+                    materialId: item.materialId,
                     price: Number(price),
-                    isAll: Boolean(!item),
+                    validUntil,
                 })
             ).unwrap();
 
-            toast.success("تم تعديل السعر بنجاح");
+            toast.success(result.message);
 
             setError("");
             onSavedAction?.();
@@ -93,20 +116,39 @@ export default function EditPriceModal({ open, onCloseAction, item, onSavedActio
             >
                 {/* Title */}
                 <h2 className="text-lg font-bold text-right">
-                    {item ? `رفع سعر: ${item.materialName}` : "رفع سعر للكل"}
+                    رفع سعر: {item?.materialName}
                 </h2>
 
-                {/* Input */}
-                <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        setPrice(val === "" ? "" : Number(val));
-                    }}
-                    className="w-full border border-gray-200 p-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-200"
-                    placeholder="ادخل السعر الجديد"
-                />
+                {/* Price */}
+                <label className="block space-y-1 text-right">
+                    <span className="text-sm font-semibold text-gray-700">السعر الجديد</span>
+                    <input
+                        type="number"
+                        value={price}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setPrice(val === "" ? "" : Number(val));
+                        }}
+                        className="w-full border border-gray-200 p-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        placeholder="ادخل السعر الجديد"
+                    />
+                </label>
+
+                {/* Valid until */}
+                <label className="block space-y-1 text-right">
+                    <span className="text-sm font-semibold text-gray-700">صالح حتى</span>
+                    <input
+                        type="date"
+                        min={minDate}
+                        value={validUntil}
+                        onChange={(e) => setValidUntil(e.target.value)}
+                        className="w-full border border-gray-200 p-2 text-right focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                </label>
+
+                <p className="text-xs text-gray-500 text-right">
+                    السعر الجديد وتاريخه يظهران بعد موافقة الإدارة، ويظل السعر الحالي معتمدًا حتى ذلك الحين.
+                </p>
 
                 {/* Error */}
                 {error && (
@@ -125,7 +167,7 @@ export default function EditPriceModal({ open, onCloseAction, item, onSavedActio
                     </button>
 
                     <Button
-                        text={settingPrice ? "جاري الحفظ..." : "حفظ"}
+                        text={settingPrice ? "جاري الإرسال..." : "إرسال للمراجعة"}
                         onClick={handleSubmit}
                         disabled={settingPrice}
                     />
