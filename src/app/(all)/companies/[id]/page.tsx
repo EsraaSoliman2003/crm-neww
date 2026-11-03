@@ -371,7 +371,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 -mx-8">
+    <div className="min-h-screen bg-gray-50 -mx-4">
       {/* ================= COVER ================= */}
       <Images coverImage={profileData?.coverImage} />
 
@@ -539,7 +539,7 @@ export default function Page() {
             data={estimates}
             onFilteredDataChange={setFilteredCompanyEstimatesForPdf}
             getRowKeyAction={(row) => row.estimateId}
-            tableClassName="min-w-290"
+            tableClassName=""
             emptyText="لا يوجد بيانات"
             columns={renderEstimateColumns()}
           />
@@ -568,7 +568,7 @@ export default function Page() {
             data={globalEstimates}
             onFilteredDataChange={setFilteredAvailableEstimatesForPdf}
             getRowKeyAction={(row) => row.estimateId}
-            tableClassName="min-w-290"
+            tableClassName=""
             emptyText="لا يوجد بيانات"
             columns={renderEstimateColumns()}
           />
